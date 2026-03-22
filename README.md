@@ -6,7 +6,7 @@
 
 A lightweight, client-side password generator with three modes: **Password**, **Passphrase**, and **PIN**. All generation happens in the browser using the Web Crypto API — nothing is sent to any server.
 
-**Live demo:** *(coming soon)*
+**Live demo:** https://yukh.net/passgen/
 
 ---
 
