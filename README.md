@@ -4,7 +4,7 @@
 
 <img src="assets/logo.svg" width="48" height="48" align="left" style="margin-right: 14px">
 
-# Secure Password Generator v1.0.1
+# Secure Password Generator v1.0.2-devel
 
 [![JavaScript](https://img.shields.io/badge/JavaScript-ES2020-f7df1e?logo=javascript&logoColor=black)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE.md)

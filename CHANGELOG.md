@@ -4,6 +4,10 @@
 
 # Changelog
 
+## v1.0.2 — unreleased
+
+---
+
 ## v1.0.1 — 2026-03-22
 
 ### Features
