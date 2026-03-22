@@ -104,7 +104,8 @@ document.getElementById('reset-btn').addEventListener('click', () => {
     if (confirm(t('reset_confirm'))) {
         localStorage.removeItem(LS_THEME);
         localStorage.removeItem(LS_LANG);
-        localStorage.removeItem(LS_GEN);
+        // Write a clean versioned object so migration won't restore stale values on reload
+        localStorage.setItem(LS_GEN, JSON.stringify({ _v: SETTINGS_VERSION }));
         location.reload();
     }
 });
@@ -257,15 +258,21 @@ const ICON_EYE     = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none
 const ICON_EYE_OFF = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`;
 
 function linkSlider(rangeEl, numEl, onChange) {
-    rangeEl.addEventListener('input', () => { numEl.value = rangeEl.value; onChange(); });
+    rangeEl.addEventListener('input', () => {
+        numEl.value = rangeEl.value;
+        onChange();
+    });
     numEl.addEventListener('input', () => {
-        const v = Math.min(+numEl.max, Math.max(+numEl.min, +numEl.value || +numEl.min));
-        numEl.value = v; rangeEl.value = v; onChange();
+        // Sync range (auto-clamps internally); don't overwrite numEl mid-typing
+        rangeEl.value = numEl.value;
+        onChange(); // regen reads from rangeEl, so always uses a valid clamped value
     });
     numEl.addEventListener('blur', () => {
-        if (!numEl.value) numEl.value = numEl.min;
-        const v = Math.min(+numEl.max, Math.max(+numEl.min, +numEl.value));
-        numEl.value = v; rangeEl.value = v; onChange();
+        // Clamp and finalize on focus loss
+        const v = Math.min(+numEl.max, Math.max(+numEl.min, +numEl.value || +numEl.min));
+        numEl.value = v;
+        rangeEl.value = v;
+        onChange();
     });
 }
 
@@ -320,7 +327,8 @@ function loadGenSettings() {
             // v2: reset fields that had wrong defaults in earlier versions
             delete s.pp_separator; // was defaulting to 'space', correct default is 'dash'
             delete s.pw_length;    // was defaulting to 16, correct default is 20
-            delete s.pp_count;     // was defaulting to 4, correct default is 8
+            delete s.pp_count;     // was defaulting to 4, correct default is 8 (passphrase words)
+            delete s.pw_count;     // clear potentially out-of-range count values
             s._v = SETTINGS_VERSION;
             localStorage.setItem(LS_GEN, JSON.stringify(s));
         }

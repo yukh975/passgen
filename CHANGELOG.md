@@ -18,6 +18,8 @@
 - Strength indicator based on Shannon entropy + character variety: Strong requires 2+ types, Very Strong requires 3+ types and ≥80 bits; single-character-type passwords are capped at Fair regardless of length
 - Reset settings button (↺) clears all localStorage and reloads the page
 - Settings restore now uses browser-clamped range values, fixing a bug where out-of-range values from localStorage caused fields to display stale numbers
+- Fixed number input fields accepting impossible values mid-typing (linkSlider no longer overwrites the field on every keystroke; clamping happens only on blur)
+- Reset settings now writes a clean versioned object to localStorage to guarantee all fields revert to HTML defaults on reload
 
 ### UI
 - Dark/light theme toggle (sun/moon icon) in the header; dark theme is default
