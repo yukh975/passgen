@@ -3,7 +3,7 @@ const TRANSLATIONS = {
     en: {
         // ── App chrome ──────────────────────────────────────────
         app_title:       'Passgen',
-        subtitle:        'Password generator',
+        subtitle:        'Secure Passwords Generator',
         help_title:      'Help',
         help_content:    '<p>TODO: add help text here.</p>',
         theme_to_light:  'Switch to light theme',
@@ -15,7 +15,7 @@ const TRANSLATIONS = {
     ru: {
         // ── Оболочка ─────────────────────────────────────────────
         app_title:       'Passgen',
-        subtitle:        'Генератор паролей',
+        subtitle:        'Генератор надёжных паролей',
         help_title:      'Справка',
         help_content:    '<p>TODO: добавьте текст справки.</p>',
         theme_to_light:  'Светлая тема',
