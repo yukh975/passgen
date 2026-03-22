@@ -68,10 +68,4 @@ npx serve .
 
 ---
 
-## Лицензия
-
-[MIT](LICENSE.md) © 2026 Yuriy Khachaturian
-
----
-
 🌐 [English](README.md) | **Русский**
