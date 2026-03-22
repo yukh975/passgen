@@ -46,6 +46,7 @@
                     <button type="button" class="gen-tab" data-tab="passphrase" data-i18n="tab_passphrase"></button>
                     <button type="button" class="gen-tab" data-tab="pin" data-i18n="tab_pin"></button>
                     <button type="button" class="gen-tab" data-tab="ssh" data-i18n="tab_ssh"></button>
+                    <button type="button" class="gen-tab" data-tab="gpg" data-i18n="tab_gpg"></button>
                 </div>
 
                 <!-- ── Password ──────────────────────────────────────── -->
@@ -256,6 +257,41 @@
 
                 </div>
 
+                <!-- ── GPG Key ───────────────────────────────────────── -->
+                <div id="panel-gpg" class="gen-panel hidden">
+
+                    <div class="gen-row-split">
+                        <div class="gen-field">
+                            <label class="gen-label" data-i18n="gpg_type_label"></label>
+                            <select id="gpg-type">
+                                <option value="ed25519">Ed25519</option>
+                                <option value="rsa3072">RSA-3072</option>
+                                <option value="rsa4096">RSA-4096</option>
+                            </select>
+                        </div>
+                        <div class="gen-field">
+                            <label class="gen-label" for="gpg-uid" data-i18n="gpg_uid_label"></label>
+                            <input type="text" id="gpg-uid" class="gen-input" autocomplete="off"
+                                   data-i18n-placeholder="gpg_uid_ph">
+                        </div>
+                    </div>
+
+                    <div class="result-area">
+                        <div id="gpg-result" class="ssh-result"></div>
+                        <div class="ssh-footer">
+                            <div class="ssh-footer-side"></div>
+                            <div class="ssh-actions">
+                                <button type="button" id="gpg-generate" class="ssh-btn"            data-i18n="btn_generate"></button>
+                                <button type="button" id="gpg-clear"    class="ssh-btn ssh-btn--muted" data-i18n="btn_clear"></button>
+                            </div>
+                            <div class="ssh-footer-side ssh-footer-right">
+                                <button type="button" id="gpg-download" class="ssh-btn ssh-btn--muted hidden" data-i18n="btn_download_zip"></button>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
             </div>
         </main>
 
@@ -339,5 +375,6 @@
     <script src="assets/translations.js"></script>
     <script src="assets/bcrypt.js"></script>
     <script src="assets/app.js"></script>
+    <script src="assets/pgp.js"></script>
 </body>
 </html>

@@ -5,7 +5,7 @@ const TRANSLATIONS = {
         app_title:       'Password Generator',
         subtitle:        'Secure Passwords Generator',
         help_title:      'Help',
-        help_content:    '<h3>Password</h3><p>Configure length, character sets, and optional constraints. Use <strong>Presets</strong> to apply platform-specific settings (PostgreSQL, MySQL, Redis, etc.).</p><h3>Passphrase</h3><p>Generates a sequence of random words. Easier to remember, strong enough for most uses. Adjust word count, capitalization, separator, and optional numbers.</p><h3>PIN</h3><p>A numeric code of 4–12 digits generated with a cryptographically secure random source.</p><h3>SSH Key</h3><p>Generates ED25519 or RSA (2048/3072/4096-bit) key pairs directly in the browser using the Web Crypto API. Keys are exported in standard OpenSSH format. Optionally enter a <strong>Passphrase</strong> to encrypt the private key with AES-256-CTR + bcrypt — compatible with standard <code>ssh</code>/<code>ssh-keygen</code> tools. Use <strong>Download archive</strong> to save both keys as a ZIP file. Use <strong>Verify keys</strong> to check that a private and public key form a valid pair.</p><h3>Strength</h3><p>Estimated from length and character variety. For best security use 16+ characters with all character sets enabled.</p>',
+        help_content:    '<h3>Password</h3><p>Configure length, character sets, and optional constraints. Use <strong>Presets</strong> to apply platform-specific settings (PostgreSQL, MySQL, Redis, etc.).</p><h3>Passphrase</h3><p>Generates a sequence of random words. Easier to remember, strong enough for most uses. Adjust word count, capitalization, separator, and optional numbers.</p><h3>PIN</h3><p>A numeric code of 4–12 digits generated with a cryptographically secure random source.</p><h3>SSH Key</h3><p>Generates ED25519 or RSA (2048/3072/4096-bit) key pairs directly in the browser using the Web Crypto API. Keys are exported in standard OpenSSH format. Optionally enter a <strong>Passphrase</strong> to encrypt the private key with AES-256-CTR + bcrypt — compatible with standard <code>ssh</code>/<code>ssh-keygen</code> tools. Use <strong>Download archive</strong> to save both keys as a ZIP file. Use <strong>Verify keys</strong> to check that a private and public key form a valid pair.</p><h3>GPG Key</h3><p>Generates OpenPGP v4 key pairs (Ed25519 or RSA 3072/4096-bit) directly in the browser using the Web Crypto API. Keys are exported in ASCII-armored PGP format and can be imported with <code>gpg --import</code>. Optionally set a <strong>User ID</strong> in <code>Name &lt;email&gt;</code> format. Use <strong>Download archive</strong> to save both keys as a ZIP file.</p><h3>Strength</h3><p>Estimated from length and character variety. For best security use 16+ characters with all character sets enabled.</p>',
         theme_to_light:  'Switch to light theme',
         theme_to_dark:   'Switch to dark theme',
         reset_title:     'Reset settings',
@@ -83,13 +83,22 @@ const TRANSLATIONS = {
         ssh_verify_pub_ph:   'ssh-ed25519 AAAA… or ssh-rsa AAAA…',
         ssh_passphrase_label: 'Passphrase (optional)',
         ssh_passphrase_ph:   'Leave empty for unencrypted key',
+
+        // ── GPG Key tab ──────────────────────────────────────
+        tab_gpg:            'GPG Key',
+        gpg_type_label:     'Key type',
+        gpg_uid_label:      'User ID',
+        gpg_uid_ph:         'Name <email@example.com>',
+        gpg_private_label:  'Private key',
+        gpg_public_label:   'Public key',
+        gpg_generating:     'Generating\u2026',
     },
     ru: {
         // ── Оболочка ─────────────────────────────────────────────
         app_title:       'Password Generator',
         subtitle:        'Генератор надёжных паролей',
         help_title:      'Справка',
-        help_content:    '<h3>Пароль</h3><p>Настройте длину, наборы символов и ограничения. Используйте <strong>Пресеты</strong> для платформ (PostgreSQL, MySQL, Redis и т.д.).</p><h3>Фраза-пароль</h3><p>Набор случайных слов. Легко запомнить, достаточно надёжный для большинства задач. Настраиваются количество слов, регистр, разделитель и цифры.</p><h3>PIN</h3><p>Числовой код 4–12 цифр на основе криптографически стойкого генератора.</p><h3>SSH-ключ</h3><p>Генерация пар ключей ED25519 или RSA (2048/3072/4096 бит) прямо в браузере через Web Crypto API. Ключи экспортируются в стандартном формате OpenSSH. Поле <strong>Пароль ключа</strong> позволяет зашифровать приватный ключ (AES-256-CTR + bcrypt) — совместимо со стандартными инструментами <code>ssh</code>/<code>ssh-keygen</code>. Кнопка <strong>Скачать архив</strong> сохраняет оба ключа одним ZIP-файлом. Кнопка <strong>Проверить ключи</strong> позволяет убедиться, что приватный и публичный ключ образуют верную пару.</p><h3>Надёжность</h3><p>Оценивается по длине и разнообразию символов. Для максимальной защиты используйте 16+ символов со всеми включёнными наборами.</p>',
+        help_content:    '<h3>Пароль</h3><p>Настройте длину, наборы символов и ограничения. Используйте <strong>Пресеты</strong> для платформ (PostgreSQL, MySQL, Redis и т.д.).</p><h3>Фраза-пароль</h3><p>Набор случайных слов. Легко запомнить, достаточно надёжный для большинства задач. Настраиваются количество слов, регистр, разделитель и цифры.</p><h3>PIN</h3><p>Числовой код 4–12 цифр на основе криптографически стойкого генератора.</p><h3>SSH-ключ</h3><p>Генерация пар ключей ED25519 или RSA (2048/3072/4096 бит) прямо в браузере через Web Crypto API. Ключи экспортируются в стандартном формате OpenSSH. Поле <strong>Пароль ключа</strong> позволяет зашифровать приватный ключ (AES-256-CTR + bcrypt) — совместимо со стандартными инструментами <code>ssh</code>/<code>ssh-keygen</code>. Кнопка <strong>Скачать архив</strong> сохраняет оба ключа одним ZIP-файлом. Кнопка <strong>Проверить ключи</strong> позволяет убедиться, что приватный и публичный ключ образуют верную пару.</p><h3>GPG-ключ</h3><p>Генерация пар ключей OpenPGP v4 (Ed25519 или RSA 3072/4096 бит) прямо в браузере через Web Crypto API. Ключи экспортируются в формате ASCII armor и импортируются командой <code>gpg --import</code>. Поле <strong>Идентификатор пользователя</strong> задаётся в формате <code>Имя &lt;email&gt;</code>. Кнопка <strong>Скачать архив</strong> сохраняет оба ключа одним ZIP-файлом.</p><h3>Надёжность</h3><p>Оценивается по длине и разнообразию символов. Для максимальной защиты используйте 16+ символов со всеми включёнными наборами.</p>',
         theme_to_light:  'Светлая тема',
         theme_to_dark:   'Тёмная тема',
         reset_title:     'Сбросить настройки',
@@ -167,5 +176,14 @@ const TRANSLATIONS = {
         ssh_verify_pub_ph:   'ssh-ed25519 AAAA… или ssh-rsa AAAA…',
         ssh_passphrase_label: 'Пароль ключа (необязательно)',
         ssh_passphrase_ph:   'Оставьте пустым для незащищённого ключа',
+
+        // ── Вкладка GPG-ключ ─────────────────────────────────
+        tab_gpg:            'GPG-ключ',
+        gpg_type_label:     'Тип ключа',
+        gpg_uid_label:      'Идентификатор пользователя',
+        gpg_uid_ph:         'Name <email@example.com>',
+        gpg_private_label:  'Приватный ключ',
+        gpg_public_label:   'Публичный ключ',
+        gpg_generating:     'Создание\u2026',
     },
 };

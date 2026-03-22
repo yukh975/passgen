@@ -11,6 +11,7 @@
 - **Download archive**: single button (right side of action bar, appears after generation) downloads both keys as a ZIP file (`<name>.key` + `<name>.pub`) with paired random base filename; ZIP built in pure JS without external libraries
 - **Verify keys**: modal window to check that a private and public key form a valid pair — paste or upload each key, supports file upload (`.key`, `.pub`, `.pem`)
 - **SSH key passphrase**: optional passphrase field in the SSH Key tab; when filled, the private key is encrypted with AES-256-CTR + bcrypt KDF (16 rounds), identical to `ssh-keygen` output — compatible with standard `ssh`/`ssh-keygen` tools; bcrypt implemented in pure JS without external libraries
+- **GPG Key tab**: generate OpenPGP v4 key pairs (Ed25519 or RSA 3072/4096-bit) directly in the browser using the Web Crypto API; keys are exported as ASCII-armored PGP blocks importable with `gpg --import`; optional User ID field (`Name <email>` format); Download archive saves both `.asc` and `.pub.asc` files as a ZIP; implemented in pure JS without external libraries
 
 ### Fixes
 - SSH key verification: rewritten OpenSSH private key parser using `DataView.getUint32` and line-by-line PEM stripping — eliminated false "Truncated key data" errors
