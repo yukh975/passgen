@@ -299,8 +299,9 @@ function updateStrength(password, barEl, textEl) {
     textEl.style.color  = STRENGTH_COLORS[lvl] || 'var(--muted)';
 }
 
-const ICON_COPY = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
-const ICON_CHECK = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
+const ICON_COPY     = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
+const ICON_CHECK    = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
+const ICON_DOWNLOAD = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>`;
 
 // ============================================================
 //  Settings persistence
@@ -857,12 +858,22 @@ async function generateRSAPair(bits) {
     typeSelect.addEventListener('change', updateBitsVisibility);
     updateBitsVisibility();
 
-    function renderResult(pair) {
+    function sshDownload(filename, content) {
+        const blob = new Blob([content], { type: 'text/plain' });
+        const url  = URL.createObjectURL(blob);
+        const a    = document.createElement('a');
+        a.href = url; a.download = filename; a.click();
+        URL.revokeObjectURL(url);
+    }
+
+    function renderResult(pair, baseName) {
         resultEl.innerHTML = '';
         [
-            { key: 'private', label: 'ssh_private_label', val: pair.privateKey },
-            { key: 'public',  label: 'ssh_public_label',  val: pair.publicKey  },
-        ].forEach(({ label, val, key }) => {
+            { key: 'private', label: 'ssh_private_label', val: pair.privateKey, ext: 'key' },
+            { key: 'public',  label: 'ssh_public_label',  val: pair.publicKey,  ext: 'pub' },
+        ].forEach(({ label, val, key, ext }) => {
+            const filename = `${baseName}.${ext}`;
+
             const block = document.createElement('div');
             block.className = 'ssh-key-block';
 
@@ -872,6 +883,16 @@ async function generateRSAPair(bits) {
             const labelEl = document.createElement('span');
             labelEl.className   = 'gen-label';
             labelEl.textContent = t(label);
+
+            const btnGroup = document.createElement('div');
+            btnGroup.className = 'ssh-btn-group';
+
+            const dlBtn = document.createElement('button');
+            dlBtn.type      = 'button';
+            dlBtn.className = 'pw-copy-btn';
+            dlBtn.innerHTML = ICON_DOWNLOAD;
+            dlBtn.title     = filename;
+            dlBtn.addEventListener('click', () => sshDownload(filename, val));
 
             const copyBtn = document.createElement('button');
             copyBtn.type      = 'button';
@@ -886,8 +907,10 @@ async function generateRSAPair(bits) {
                 });
             });
 
+            btnGroup.appendChild(dlBtn);
+            btnGroup.appendChild(copyBtn);
             header.appendChild(labelEl);
-            header.appendChild(copyBtn);
+            header.appendChild(btnGroup);
 
             const textarea = document.createElement('textarea');
             textarea.className    = 'ssh-key-textarea';
@@ -895,12 +918,13 @@ async function generateRSAPair(bits) {
             textarea.spellcheck   = false;
             textarea.autocomplete = 'off';
             textarea.value        = val;
-            const lines = val.split('\n').length;
-            textarea.rows = key === 'private' ? Math.min(lines, 22) : 3;
 
             block.appendChild(header);
             block.appendChild(textarea);
             resultEl.appendChild(block);
+
+            // Auto-size to content after DOM insertion
+            textarea.style.height = textarea.scrollHeight + 'px';
         });
     }
 
@@ -908,10 +932,13 @@ async function generateRSAPair(bits) {
         generateBtn.disabled    = true;
         generateBtn.textContent = t('ssh_generating');
         try {
-            const type = typeSelect.value;
-            const bits = +bitsSelect.value;
-            const pair = type === 'ed25519' ? await generateEd25519Pair() : await generateRSAPair(bits);
-            renderResult(pair);
+            const type     = typeSelect.value;
+            const bits     = +bitsSelect.value;
+            const pair     = type === 'ed25519' ? await generateEd25519Pair() : await generateRSAPair(bits);
+            const randBuf  = new Uint8Array(4);
+            crypto.getRandomValues(randBuf);
+            const baseName = Array.from(randBuf, b => b.toString(16).padStart(2, '0')).join('');
+            renderResult(pair, baseName);
             saveGenSettings({ ssh_type: type, ssh_bits: bits });
         } catch (err) {
             showError(err.message || 'Key generation failed');
@@ -920,6 +947,9 @@ async function generateRSAPair(bits) {
             generateBtn.textContent = t('btn_generate');
         }
     }
+
+    const clearBtn = document.getElementById('ssh-clear');
+    clearBtn.addEventListener('click', () => { resultEl.innerHTML = ''; });
 
     generateBtn.addEventListener('click', generate);
     generate();

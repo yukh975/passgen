@@ -1855,6 +1855,11 @@ pre#result-json {
     justify-content: space-between;
 }
 
+.ssh-btn-group {
+    display: flex;
+    gap: 6px;
+}
+
 .ssh-key-textarea {
     width: 100%;
     font-family: var(--mono);
@@ -1866,7 +1871,7 @@ pre#result-json {
     color: var(--text);
     padding: 10px 12px;
     resize: vertical;
-    overflow-y: auto;
+    overflow: hidden;
     outline: none;
 }
 

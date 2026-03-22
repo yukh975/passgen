@@ -70,6 +70,7 @@ const TRANSLATIONS = {
         ssh_public_label: 'Public key',
         btn_generate:     'Generate',
         ssh_generating:   'Generating…',
+        btn_clear:        'Clear',
     },
     ru: {
         // ── Оболочка ─────────────────────────────────────────────
@@ -141,5 +142,6 @@ const TRANSLATIONS = {
         ssh_public_label: 'Публичный ключ',
         btn_generate:     'Создать',
         ssh_generating:   'Создание…',
+        btn_clear:        'Очистить',
     },
 };
