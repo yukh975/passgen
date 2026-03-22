@@ -211,9 +211,9 @@ function generatePassphrase({ count, capitalize, randomCap, numStart, numEnd, nu
     } else {
         sep = SEPS[separator] ?? ' ';
     }
+    if (numStart) words[0] = secureRandomInt(10) + words[0];
+    if (numEnd)   words[words.length - 1] += secureRandomInt(10);
     let result = words.join(sep);
-    if (numStart) result = secureRandomInt(10) + sep + result;
-    if (numEnd)   result = result + sep + secureRandomInt(10);
     return result;
 }
 
