@@ -19,7 +19,7 @@ A lightweight, client-side password generator with three modes: **Password**, **
 - No-repeating-characters option
 - Extra symbols field and exclude-characters field
 - **8 platform presets**: PostgreSQL, MySQL, SQL Server, Linux User, Windows Admin, Redis, RabbitMQ, High Entropy
-- Strength indicator (Very Weak → Very Strong)
+- Strength indicator based on Shannon entropy — 20 characters with any two or more character sets already reaches **Very Strong** (≥80 bits)
 
 ### Passphrase
 - Random word sequences from a ~500-word wordlist

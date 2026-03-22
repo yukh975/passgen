@@ -15,6 +15,7 @@
 - Regenerate button shared across all results on each tab
 - Results visible by default (no show/hide toggle)
 - Cryptographically secure randomness via `window.crypto.getRandomValues()` with rejection sampling to eliminate modulo bias
+- Strength indicator based on Shannon entropy (bits = length × log₂(pool size)); thresholds: <28 Very Weak, 28–39 Weak, 40–59 Fair, 60–79 Strong, ≥80 Very Strong
 
 ### UI
 - Dark/light theme toggle (sun/moon icon) in the header; dark theme is default

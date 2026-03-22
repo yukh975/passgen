@@ -225,14 +225,18 @@ function generatePin(length) {
 
 function getStrength(password) {
     if (!password) return 0;
-    let score = 0;
-    if (password.length >= 8)          score++;
-    if (password.length >= 12)         score++;
-    if (/[a-z]/.test(password))        score++;
-    if (/[A-Z]/.test(password))        score++;
-    if (/[0-9]/.test(password))        score++;
-    if (/[^a-zA-Z0-9]/.test(password)) score++;
-    return Math.min(5, Math.max(1, Math.round((score / 6) * 5)));
+    let pool = 0;
+    if (/[a-z]/.test(password))        pool += 26;
+    if (/[A-Z]/.test(password))        pool += 26;
+    if (/[0-9]/.test(password))        pool += 10;
+    if (/[^a-zA-Z0-9]/.test(password)) pool += 32;
+    if (pool === 0) return 1;
+    const entropy = password.length * Math.log2(pool);
+    if (entropy < 28) return 1; // < 28 bits  — Very Weak
+    if (entropy < 40) return 2; // 28–39 bits  — Weak
+    if (entropy < 60) return 3; // 40–59 bits  — Fair
+    if (entropy < 80) return 4; // 60–79 bits  — Strong
+    return 5;                   // ≥ 80 bits   — Very Strong
 }
 
 // ============================================================
