@@ -13,29 +13,32 @@ A lightweight, client-side password generator with three modes: **Password**, **
 ## Features
 
 ### Password
-- Configurable length (4–64 characters)
+- Configurable length (4–64 characters, default 20)
 - Toggle character sets: uppercase, lowercase, numbers, symbols
 - Option to exclude visually similar characters (I, l, 1, O, 0)
+- No-repeating-characters option
 - Extra symbols field and exclude-characters field
 - **8 platform presets**: PostgreSQL, MySQL, SQL Server, Linux User, Windows Admin, Redis, RabbitMQ, High Entropy
 - Strength indicator (Very Weak → Very Strong)
 
 ### Passphrase
 - Random word sequences from a ~500-word wordlist
-- Configurable word count (2–10)
+- Configurable word count (2–10, default 8)
 - Capitalization options: capitalize first letter, or random per-letter
 - Optional digit at start and/or end
-- Separator: space, dash, dot, underscore, random symbol, or none
+- Random numbers inside phrase (randomly appends a digit to some words)
+- Separator: space, dash (default), dot, underscore, random symbol, or none
 
 ### PIN
-- Numeric code, configurable length (4–12 digits)
+- Numeric code, configurable length (4–12 digits, default 6)
 
 ### General
-- Show / hide result toggle
-- One-click copy to clipboard
-- Regenerate button
+- Generate multiple results at once (count slider 1–20) on all three tabs
+- Per-result copy button; **Copy all** button opens a modal with all results
+- Regenerate button shared across all results
 - Dark / light theme (saved in `localStorage`)
 - EN / RU language switcher
+- Active tab and all generator settings saved across page reloads
 - Cryptographically secure randomness via `window.crypto.getRandomValues()`
 - Fully client-side — no server, no tracking
 
