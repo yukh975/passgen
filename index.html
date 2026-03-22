@@ -45,6 +45,7 @@
                     <button type="button" class="gen-tab active" data-tab="password" data-i18n="tab_password"></button>
                     <button type="button" class="gen-tab" data-tab="passphrase" data-i18n="tab_passphrase"></button>
                     <button type="button" class="gen-tab" data-tab="pin" data-i18n="tab_pin"></button>
+                    <button type="button" class="gen-tab" data-tab="ssh" data-i18n="tab_ssh"></button>
                 </div>
 
                 <!-- ── Password ──────────────────────────────────────── -->
@@ -209,6 +210,36 @@
 
                 </div>
 
+                <!-- ── SSH Key ───────────────────────────────────────── -->
+                <div id="panel-ssh" class="gen-panel hidden">
+
+                    <div class="gen-row-split">
+                        <div class="gen-field">
+                            <label class="gen-label" data-i18n="ssh_type_label"></label>
+                            <select id="ssh-type">
+                                <option value="ed25519">ED25519</option>
+                                <option value="rsa">RSA</option>
+                            </select>
+                        </div>
+                        <div class="gen-field" id="ssh-bits-field">
+                            <label class="gen-label" data-i18n="ssh_bits_label"></label>
+                            <select id="ssh-bits">
+                                <option value="2048">2048 bits</option>
+                                <option value="3072">3072 bits</option>
+                                <option value="4096" selected>4096 bits</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="result-area">
+                        <div id="ssh-result" class="ssh-result"></div>
+                        <div class="pw-actions">
+                            <button type="button" id="ssh-generate" class="result-action-btn" data-i18n="btn_generate"></button>
+                        </div>
+                    </div>
+
+                </div>
+
             </div>
         </main>
 
@@ -249,7 +280,7 @@
 
         <footer class="copyright">
             <div>© 2026 Yuriy Khachaturian</div>
-            <div>v1.0.0</div>
+            <div>v1.0.1-devel</div>
         </footer>
 
     </div>

@@ -61,6 +61,15 @@ const TRANSLATIONS = {
         btn_regen:       'Regenerate',
         btn_copy_all:    'Copy all',
         copy_all_title:  'Generated passwords',
+
+        // ── SSH Key tab ──────────────────────────────────────
+        tab_ssh:          'SSH Key',
+        ssh_type_label:   'Key type',
+        ssh_bits_label:   'Key size',
+        ssh_private_label:'Private key',
+        ssh_public_label: 'Public key',
+        btn_generate:     'Generate',
+        ssh_generating:   'Generating…',
     },
     ru: {
         // ── Оболочка ─────────────────────────────────────────────
@@ -123,5 +132,14 @@ const TRANSLATIONS = {
         btn_regen:       'Пересоздать',
         btn_copy_all:    'Скопировать все',
         copy_all_title:  'Сгенерированные пароли',
+
+        // ── Вкладка SSH-ключ ─────────────────────────────────
+        tab_ssh:          'SSH-ключ',
+        ssh_type_label:   'Тип ключа',
+        ssh_bits_label:   'Размер ключа',
+        ssh_private_label:'Приватный ключ',
+        ssh_public_label: 'Публичный ключ',
+        btn_generate:     'Создать',
+        ssh_generating:   'Создание…',
     },
 };

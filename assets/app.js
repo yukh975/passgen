@@ -316,6 +316,7 @@ const GEN_DEFAULTS = {
     pw_length:    20,  pw_count:    1,
     pp_count:     8,   pp_qty:      1,  pp_separator: 'dash',
     pin_length:   6,   pin_qty:     1,
+    ssh_type:     'ed25519', ssh_bits: 4096,
 };
 
 document.getElementById('reset-btn')?.addEventListener('click', () => {
@@ -695,6 +696,234 @@ document.querySelectorAll('.gen-tab').forEach(tab => {
         saveGenSettings({ active_tab: tab.dataset.tab });
     });
 });
+
+// ============================================================
+//  Generator — SSH Key tab
+// ============================================================
+
+// ── Binary helpers (OpenSSH wire format) ─────────────────────
+
+function concatBytes(...arrays) {
+    const total = arrays.reduce((s, a) => s + a.length, 0);
+    const result = new Uint8Array(total);
+    let offset = 0;
+    for (const a of arrays) { result.set(a, offset); offset += a.length; }
+    return result;
+}
+
+function sshUint32(n) {
+    const buf = new Uint8Array(4);
+    new DataView(buf.buffer).setUint32(0, n, false);
+    return buf;
+}
+
+function sshString(str) {
+    const enc = new TextEncoder().encode(str);
+    return concatBytes(sshUint32(enc.length), enc);
+}
+
+function sshBytes(bytes) {
+    return concatBytes(sshUint32(bytes.length), bytes);
+}
+
+// mpint: big-endian arbitrary-precision integer with leading 0x00 if high bit set
+function sshMpint(bytes) {
+    let start = 0;
+    while (start < bytes.length - 1 && bytes[start] === 0) start++;
+    bytes = bytes.slice(start);
+    if (bytes[0] & 0x80) {
+        const padded = new Uint8Array(bytes.length + 1);
+        padded.set(bytes, 1);
+        bytes = padded;
+    }
+    return concatBytes(sshUint32(bytes.length), bytes);
+}
+
+function b64urlToBytes(b64url) {
+    const b64 = b64url.replace(/-/g, '+').replace(/_/g, '/');
+    const bin = atob(b64);
+    return Uint8Array.from(bin, c => c.charCodeAt(0));
+}
+
+function bytesToB64(bytes) {
+    let bin = '';
+    for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+    return btoa(bin);
+}
+
+function osshPadding(bytes) {
+    const rem = bytes.length % 8;
+    if (rem === 0) return bytes;
+    const pad = 8 - rem;
+    const result = new Uint8Array(bytes.length + pad);
+    result.set(bytes);
+    for (let i = 0; i < pad; i++) result[bytes.length + i] = i + 1;
+    return result;
+}
+
+function formatOsshPem(blob) {
+    const b64 = bytesToB64(blob);
+    const lines = b64.match(/.{1,70}/g).join('\n');
+    return `-----BEGIN OPENSSH PRIVATE KEY-----\n${lines}\n-----END OPENSSH PRIVATE KEY-----`;
+}
+
+function buildOsshBlob(pubBlob, privSection) {
+    const magic = new TextEncoder().encode('openssh-key-v1\0');
+    return concatBytes(
+        magic,
+        sshString('none'),         // ciphername
+        sshString('none'),         // kdfname
+        sshString(''),             // kdf options (empty string = \0\0\0\0)
+        sshUint32(1),              // num keys
+        sshBytes(pubBlob),         // public key
+        sshBytes(osshPadding(privSection)),
+    );
+}
+
+// ── Key generation ────────────────────────────────────────────
+
+async function generateEd25519Pair() {
+    const kp = await crypto.subtle.generateKey({ name: 'Ed25519' }, true, ['sign', 'verify']);
+    const pubJwk  = await crypto.subtle.exportKey('jwk', kp.publicKey);
+    const privJwk = await crypto.subtle.exportKey('jwk', kp.privateKey);
+
+    const pubBytes  = b64urlToBytes(pubJwk.x);               // 32 bytes
+    const privBytes = concatBytes(b64urlToBytes(privJwk.d), pubBytes); // seed+pub = 64 bytes
+
+    const pubBlob = concatBytes(sshString('ssh-ed25519'), sshBytes(pubBytes));
+    const pubLine = `ssh-ed25519 ${bytesToB64(pubBlob)}`;
+
+    const checkInt = new Uint8Array(4);
+    crypto.getRandomValues(checkInt);
+
+    const privSection = concatBytes(
+        checkInt, checkInt,
+        sshString('ssh-ed25519'),
+        sshBytes(pubBytes),
+        sshBytes(privBytes),
+        sshString(''),
+    );
+
+    return { privateKey: formatOsshPem(buildOsshBlob(pubBlob, privSection)), publicKey: pubLine };
+}
+
+async function generateRSAPair(bits) {
+    const kp = await crypto.subtle.generateKey(
+        { name: 'RSASSA-PKCS1-v1_5', modulusLength: bits, publicExponent: new Uint8Array([1, 0, 1]), hash: 'SHA-256' },
+        true, ['sign', 'verify'],
+    );
+    const jwk = await crypto.subtle.exportKey('jwk', kp.privateKey);
+
+    const n  = b64urlToBytes(jwk.n);
+    const e  = b64urlToBytes(jwk.e);
+    const d  = b64urlToBytes(jwk.d);
+    const p  = b64urlToBytes(jwk.p);
+    const q  = b64urlToBytes(jwk.q);
+    const qi = b64urlToBytes(jwk.qi); // q^-1 mod p (iqmp)
+
+    const pubBlob = concatBytes(sshString('ssh-rsa'), sshMpint(e), sshMpint(n));
+    const pubLine = `ssh-rsa ${bytesToB64(pubBlob)}`;
+
+    const checkInt = new Uint8Array(4);
+    crypto.getRandomValues(checkInt);
+
+    const privSection = concatBytes(
+        checkInt, checkInt,
+        sshString('ssh-rsa'),
+        sshMpint(n), sshMpint(e), sshMpint(d),
+        sshMpint(qi), sshMpint(p), sshMpint(q),
+        sshString(''),
+    );
+
+    return { privateKey: formatOsshPem(buildOsshBlob(pubBlob, privSection)), publicKey: pubLine };
+}
+
+// ── SSH tab setup ─────────────────────────────────────────────
+
+(function setupSSH() {
+    const s           = loadGenSettings();
+    const typeSelect  = document.getElementById('ssh-type');
+    const bitsSelect  = document.getElementById('ssh-bits');
+    const bitsField   = document.getElementById('ssh-bits-field');
+    const resultEl    = document.getElementById('ssh-result');
+    const generateBtn = document.getElementById('ssh-generate');
+
+    if (s.ssh_type !== undefined) typeSelect.value = s.ssh_type;
+    if (s.ssh_bits !== undefined) bitsSelect.value = s.ssh_bits;
+
+    function updateBitsVisibility() {
+        bitsField.classList.toggle('hidden', typeSelect.value !== 'rsa');
+    }
+    typeSelect.addEventListener('change', updateBitsVisibility);
+    updateBitsVisibility();
+
+    function renderResult(pair) {
+        resultEl.innerHTML = '';
+        [
+            { key: 'private', label: 'ssh_private_label', val: pair.privateKey },
+            { key: 'public',  label: 'ssh_public_label',  val: pair.publicKey  },
+        ].forEach(({ label, val, key }) => {
+            const block = document.createElement('div');
+            block.className = 'ssh-key-block';
+
+            const header = document.createElement('div');
+            header.className = 'ssh-key-header';
+
+            const labelEl = document.createElement('span');
+            labelEl.className   = 'gen-label';
+            labelEl.textContent = t(label);
+
+            const copyBtn = document.createElement('button');
+            copyBtn.type      = 'button';
+            copyBtn.className = 'pw-copy-btn';
+            copyBtn.innerHTML = ICON_COPY;
+            copyBtn.title     = t('btn_copy');
+            copyBtn.addEventListener('click', () => {
+                navigator.clipboard.writeText(val).then(() => {
+                    copyBtn.innerHTML = ICON_CHECK;
+                    copyBtn.classList.add('copied');
+                    setTimeout(() => { copyBtn.innerHTML = ICON_COPY; copyBtn.classList.remove('copied'); }, 2000);
+                });
+            });
+
+            header.appendChild(labelEl);
+            header.appendChild(copyBtn);
+
+            const textarea = document.createElement('textarea');
+            textarea.className    = 'ssh-key-textarea';
+            textarea.readOnly     = true;
+            textarea.spellcheck   = false;
+            textarea.autocomplete = 'off';
+            textarea.value        = val;
+            const lines = val.split('\n').length;
+            textarea.rows = key === 'private' ? Math.min(lines, 22) : 3;
+
+            block.appendChild(header);
+            block.appendChild(textarea);
+            resultEl.appendChild(block);
+        });
+    }
+
+    async function generate() {
+        generateBtn.disabled    = true;
+        generateBtn.textContent = t('ssh_generating');
+        try {
+            const type = typeSelect.value;
+            const bits = +bitsSelect.value;
+            const pair = type === 'ed25519' ? await generateEd25519Pair() : await generateRSAPair(bits);
+            renderResult(pair);
+            saveGenSettings({ ssh_type: type, ssh_bits: bits });
+        } catch (err) {
+            showError(err.message || 'Key generation failed');
+        } finally {
+            generateBtn.disabled    = false;
+            generateBtn.textContent = t('btn_generate');
+        }
+    }
+
+    generateBtn.addEventListener('click', generate);
+    generate();
+})();
 
 // ============================================================
 //  App logic — add your code below

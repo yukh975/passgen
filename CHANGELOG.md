@@ -4,6 +4,11 @@
 
 # Changelog
 
+## v1.0.1 — unreleased
+
+### Features
+- **SSH Key tab**: generate ED25519 and RSA key pairs (2048 / 3072 / 4096 bits) directly in the browser using the Web Crypto API; keys are exported in standard OpenSSH format (`-----BEGIN OPENSSH PRIVATE KEY-----`) with matching `.pub`-style public key line; copy buttons for both private and public key
+
 ## v1.0.0 — 2026-03-22
 
 ### Features
