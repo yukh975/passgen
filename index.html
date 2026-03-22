@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Passgen</title>
+    <title>Password Generator</title>
+    <link rel="icon" href="favicon.ico" sizes="48x48">
+    <link rel="icon" type="image/svg+xml" href="assets/logo.svg">
     <link rel="stylesheet" href="assets/style.css">
     <script src="assets/theme-init.js"></script>
 </head>
@@ -12,6 +14,7 @@
 
         <div class="page-header">
             <div class="title-row">
+                <img src="assets/logo.svg" alt="Passgen logo" class="site-logo">
                 <div>
                     <h1 data-i18n="app_title"></h1>
                     <p class="subtitle" data-i18n-html="subtitle"></p>
@@ -19,6 +22,8 @@
             </div>
             <div class="lang-switcher">
                 <button type="button" id="theme-btn" class="theme-btn"></button>
+                <span class="lang-sep">|</span>
+                <button type="button" id="reset-btn" class="help-btn" data-i18n-title="reset_title">↺</button>
                 <span class="lang-sep">|</span>
                 <button type="button" id="help-btn" class="help-btn" data-i18n-title="help_title">?</button>
                 <span class="lang-sep">|</span>
@@ -33,7 +38,178 @@
              ===================================================== -->
 
         <main id="app-content">
-            <!-- TODO: add your UI here -->
+            <div class="gen-card">
+
+                <!-- Tabs -->
+                <div class="gen-tabs">
+                    <button type="button" class="gen-tab active" data-tab="password" data-i18n="tab_password"></button>
+                    <button type="button" class="gen-tab" data-tab="passphrase" data-i18n="tab_passphrase"></button>
+                    <button type="button" class="gen-tab" data-tab="pin" data-i18n="tab_pin"></button>
+                </div>
+
+                <!-- ── Password ──────────────────────────────────────── -->
+                <div id="panel-password" class="gen-panel">
+
+                    <div class="gen-row">
+                        <label class="gen-label" data-i18n="length_label"></label>
+                        <div class="slider-row">
+                            <input type="range" id="pw-length-range" min="4" max="64" value="20" class="slider-input">
+                            <input type="number" id="pw-length-num" min="4" max="64" value="20" class="num-input">
+                        </div>
+                    </div>
+
+                    <div class="gen-row">
+                        <label class="gen-label" data-i18n="options_label"></label>
+                        <div class="opts-grid">
+                            <label class="toggle-row"><input type="checkbox" id="pw-upper" checked><span class="toggle-label" data-i18n="opt_uppercase"></span></label>
+                            <label class="toggle-row"><input type="checkbox" id="pw-lower" checked><span class="toggle-label" data-i18n="opt_lowercase"></span></label>
+                            <label class="toggle-row"><input type="checkbox" id="pw-numbers" checked><span class="toggle-label" data-i18n="opt_numbers"></span></label>
+                            <label class="toggle-row"><input type="checkbox" id="pw-symbols" checked><span class="toggle-label" data-i18n="opt_symbols"></span></label>
+                            <label class="toggle-row"><input type="checkbox" id="pw-nosimilar"><span class="toggle-label" data-i18n="opt_nosimilar"></span></label>
+                            <label class="toggle-row"><input type="checkbox" id="pw-norepeat"><span class="toggle-label" data-i18n="opt_norepeat"></span></label>
+                        </div>
+                    </div>
+
+                    <div class="gen-row-split">
+                        <div class="gen-field">
+                            <label class="gen-label" data-i18n="custom_symbols_label"></label>
+                            <input type="text" id="pw-custom" placeholder="@#$">
+                        </div>
+                        <div class="gen-field">
+                            <label class="gen-label" data-i18n="exclude_label"></label>
+                            <input type="text" id="pw-exclude" placeholder="&apos;&quot;;&lt;&gt;">
+                        </div>
+                    </div>
+
+                    <div class="gen-row-split">
+                        <div class="gen-field">
+                            <label class="gen-label" data-i18n="preset_label"></label>
+                            <select id="pw-preset">
+                                <option value="" data-i18n="preset_none"></option>
+                                <option value="postgresql">PostgreSQL</option>
+                                <option value="mysql">MySQL</option>
+                                <option value="sqlserver">SQL Server</option>
+                                <option value="linux">Linux User</option>
+                                <option value="windows">Windows Admin</option>
+                                <option value="redis">Redis</option>
+                                <option value="rabbitmq">RabbitMQ</option>
+                                <option value="highentropy" data-i18n="preset_high_entropy"></option>
+                            </select>
+                        </div>
+                        <div class="gen-field">
+                            <label class="gen-label" data-i18n="count_label"></label>
+                            <div class="slider-row">
+                                <input type="range" id="pw-count-range" min="1" max="50" value="1" class="slider-input">
+                                <input type="number" id="pw-count-num" min="1" max="50" value="1" class="num-input">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="result-area">
+                        <div class="strength-row">
+                            <span class="strength-label" data-i18n="strength_label"></span>
+                            <div class="strength-bar" id="pw-strength-bar">
+                                <div class="strength-seg" data-n="1"></div>
+                                <div class="strength-seg" data-n="2"></div>
+                                <div class="strength-seg" data-n="3"></div>
+                                <div class="strength-seg" data-n="4"></div>
+                                <div class="strength-seg" data-n="5"></div>
+                            </div>
+                            <span class="strength-text" id="pw-strength-text"></span>
+                        </div>
+                        <div id="pw-result-list" class="pw-result-list"></div>
+                        <div class="pw-actions">
+                            <button type="button" id="pw-copy-all" class="result-action-btn secondary" data-i18n="btn_copy_all"></button>
+                            <button type="button" id="pw-regen" class="result-action-btn" data-i18n="btn_regen"></button>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- ── Passphrase ──────────────────────────────────── -->
+                <div id="panel-passphrase" class="gen-panel hidden">
+
+                    <div class="gen-row-split">
+                        <div class="gen-field">
+                            <label class="gen-label" data-i18n="word_count_label"></label>
+                            <div class="slider-row">
+                                <input type="range" id="pp-count-range" min="2" max="10" value="8" class="slider-input">
+                                <input type="number" id="pp-count-num" min="2" max="10" value="8" class="num-input">
+                            </div>
+                        </div>
+                        <div class="gen-field">
+                            <label class="gen-label" data-i18n="count_label"></label>
+                            <div class="slider-row">
+                                <input type="range" id="pp-qty-range" min="1" max="50" value="1" class="slider-input">
+                                <input type="number" id="pp-qty-num" min="1" max="50" value="1" class="num-input">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="gen-row">
+                        <label class="gen-label" data-i18n="options_label"></label>
+                        <div class="opts-grid">
+                            <label class="toggle-row"><input type="checkbox" id="pp-capitalize"><span class="toggle-label" data-i18n="opt_capitalize"></span></label>
+                            <label class="toggle-row"><input type="checkbox" id="pp-random-cap"><span class="toggle-label" data-i18n="opt_random_cap"></span></label>
+                            <label class="toggle-row"><input type="checkbox" id="pp-num-start"><span class="toggle-label" data-i18n="opt_num_start"></span></label>
+                            <label class="toggle-row"><input type="checkbox" id="pp-num-end"><span class="toggle-label" data-i18n="opt_num_end"></span></label>
+                            <label class="toggle-row"><input type="checkbox" id="pp-num-inner"><span class="toggle-label" data-i18n="opt_num_inner"></span></label>
+                        </div>
+                    </div>
+
+                    <div class="gen-row">
+                        <label class="gen-label" data-i18n="separator_label"></label>
+                        <select id="pp-separator">
+                            <option value="space" data-i18n="sep_space"></option>
+                            <option value="dash" selected data-i18n="sep_dash"></option>
+                            <option value="dot" data-i18n="sep_dot"></option>
+                            <option value="underscore" data-i18n="sep_underscore"></option>
+                            <option value="random" data-i18n="sep_random"></option>
+                            <option value="none" data-i18n="sep_none"></option>
+                        </select>
+                    </div>
+
+                    <div class="result-area">
+                        <div id="pp-result-list" class="pw-result-list"></div>
+                        <div class="pw-actions">
+                            <button type="button" id="pp-copy-all" class="result-action-btn secondary" data-i18n="btn_copy_all"></button>
+                            <button type="button" id="pp-regen" class="result-action-btn" data-i18n="btn_regen"></button>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- ── PIN ────────────────────────────────────────── -->
+                <div id="panel-pin" class="gen-panel hidden">
+
+                    <div class="gen-row-split">
+                        <div class="gen-field">
+                            <label class="gen-label" data-i18n="length_label"></label>
+                            <div class="slider-row">
+                                <input type="range" id="pin-length-range" min="4" max="12" value="6" class="slider-input">
+                                <input type="number" id="pin-length-num" min="4" max="12" value="6" class="num-input">
+                            </div>
+                        </div>
+                        <div class="gen-field">
+                            <label class="gen-label" data-i18n="count_label"></label>
+                            <div class="slider-row">
+                                <input type="range" id="pin-qty-range" min="1" max="50" value="1" class="slider-input">
+                                <input type="number" id="pin-qty-num" min="1" max="50" value="1" class="num-input">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="result-area">
+                        <div id="pin-result-list" class="pw-result-list"></div>
+                        <div class="pw-actions">
+                            <button type="button" id="pin-copy-all" class="result-action-btn secondary" data-i18n="btn_copy_all"></button>
+                            <button type="button" id="pin-regen" class="result-action-btn" data-i18n="btn_regen"></button>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
         </main>
 
         <!-- Error toast -->
@@ -59,6 +235,18 @@
             <div class="help-body" id="help-body" data-i18n-html="help_content"></div>
         </div>
 
+        <!-- Copy-all modal -->
+        <div id="copy-all-modal" class="copy-all-modal hidden">
+            <div class="copy-all-header">
+                <span data-i18n="copy_all_title"></span>
+                <button type="button" id="copy-all-close" class="result-close">✕</button>
+            </div>
+            <div class="copy-all-body">
+                <textarea id="copy-all-text" class="copy-all-text" readonly></textarea>
+                <button type="button" id="copy-all-btn" class="result-action-btn" data-i18n="btn_copy"></button>
+            </div>
+        </div>
+
         <footer class="copyright">
             <div>© 2026 Yuriy Khachaturian</div>
             <div>v1.0.0</div>
@@ -66,6 +254,7 @@
 
     </div>
 
+    <script src="assets/wordlist.js"></script>
     <script src="assets/translations.js"></script>
     <script src="assets/app.js"></script>
 </body>
