@@ -939,14 +939,16 @@ function downloadZip(zipName, files) {
     typeSelect.addEventListener('change', updateBitsVisibility);
     updateBitsVisibility();
 
+    const downloadBtn = document.getElementById('ssh-download');
+
     function renderResult(pair, baseName) {
         resultEl.innerHTML = '';
         const enc = new TextEncoder();
 
         [
-            { key: 'private', label: 'ssh_private_label', val: pair.privateKey },
-            { key: 'public',  label: 'ssh_public_label',  val: pair.publicKey  },
-        ].forEach(({ label, val, key }) => {
+            { label: 'ssh_private_label', val: pair.privateKey },
+            { label: 'ssh_public_label',  val: pair.publicKey  },
+        ].forEach(({ label, val }) => {
             const block = document.createElement('div');
             block.className = 'ssh-key-block';
 
@@ -979,25 +981,28 @@ function downloadZip(zipName, files) {
             textarea.spellcheck   = false;
             textarea.autocomplete = 'off';
             textarea.value        = val;
+            // rows works regardless of tab visibility (unlike scrollHeight)
+            textarea.rows         = val.split('\n').length;
 
             block.appendChild(header);
             block.appendChild(textarea);
             resultEl.appendChild(block);
-            textarea.style.height = textarea.scrollHeight + 'px';
         });
 
-        // Single download-all button
-        const dlBtn = document.createElement('button');
-        dlBtn.type      = 'button';
-        dlBtn.className = 'ssh-dl-btn';
-        dlBtn.innerHTML = ICON_DOWNLOAD + ' <span>' + t('btn_download_zip') + '</span>';
-        dlBtn.addEventListener('click', () => {
+        // Wire up download button
+        downloadBtn.classList.remove('hidden');
+        downloadBtn.onclick = () => {
             downloadZip(`${baseName}.zip`, [
                 { name: `${baseName}.key`, bytes: enc.encode(pair.privateKey) },
                 { name: `${baseName}.pub`, bytes: enc.encode(pair.publicKey)  },
             ]);
-        });
-        resultEl.appendChild(dlBtn);
+        };
+    }
+
+    function clearResult() {
+        resultEl.innerHTML = '';
+        downloadBtn.classList.add('hidden');
+        downloadBtn.onclick = null;
     }
 
     async function generate() {
@@ -1020,37 +1025,58 @@ function downloadZip(zipName, files) {
         }
     }
 
-    document.getElementById('ssh-clear').addEventListener('click', () => { resultEl.innerHTML = ''; });
+    document.getElementById('ssh-clear').addEventListener('click', clearResult);
     generateBtn.addEventListener('click', generate);
-    generate();
+    // No auto-generate on load: user explicitly clicks Generate
 })();
 
 // ── SSH key pair verification ─────────────────────────────────
 
 function extractPubBlobFromPrivKey(pem) {
-    const b64 = pem.replace(/-----[^\n]+-----/g, '').replace(/\s+/g, '');
-    let bin;
-    try { bin = atob(b64); } catch { throw new Error('Invalid PEM encoding'); }
-    const buf = Uint8Array.from(bin, c => c.charCodeAt(0));
+    // Strip PEM armor line by line (handles \r\n and \n)
+    const b64 = pem.split(/\r?\n/)
+        .filter(l => l && !l.startsWith('-----'))
+        .join('');
+    let buf;
+    try {
+        const bin = atob(b64);
+        buf = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
+    } catch { throw new Error('Invalid PEM encoding'); }
 
-    const magic = 'openssh-key-v1\0';
-    if (buf.length < magic.length) throw new Error('Not a valid OpenSSH private key');
-    for (let i = 0; i < magic.length; i++) {
-        if (buf[i] !== magic.charCodeAt(i)) throw new Error('Not a valid OpenSSH private key');
+    const MAGIC = 'openssh-key-v1\0';
+    if (buf.length < MAGIC.length) throw new Error('Not a valid OpenSSH private key');
+    for (let i = 0; i < MAGIC.length; i++) {
+        if (buf[i] !== MAGIC.charCodeAt(i)) throw new Error('Not a valid OpenSSH private key');
     }
 
-    let pos = magic.length;
-    function readLen() {
-        if (pos + 4 > buf.length) throw new Error('Truncated key data');
-        const v = ((buf[pos] << 24) | (buf[pos+1] << 16) | (buf[pos+2] << 8) | buf[pos+3]) >>> 0;
-        pos += 4; return v;
-    }
-    function skipStr() { pos += readLen(); }
-    function readBlob() { const n = readLen(); const b = buf.slice(pos, pos + n); pos += n; return b; }
+    const view = new DataView(buf.buffer, buf.byteOffset, buf.byteLength);
+    let pos = MAGIC.length;
 
-    skipStr(); skipStr(); skipStr(); // ciphername, kdfname, kdfoptions
-    readLen();                       // numkeys
-    return readBlob();               // embedded public key blob
+    function readUint32() {
+        if (pos + 4 > buf.length) throw new Error('Not a valid OpenSSH private key');
+        const v = view.getUint32(pos, false); // big-endian
+        pos += 4;
+        return v;
+    }
+    function skipString() {
+        const len = readUint32();
+        if (pos + len > buf.length) throw new Error('Not a valid OpenSSH private key');
+        pos += len;
+    }
+    function readBytes() {
+        const len = readUint32();
+        if (pos + len > buf.length) throw new Error('Not a valid OpenSSH private key');
+        const slice = buf.slice(pos, pos + len);
+        pos += len;
+        return slice;
+    }
+
+    skipString(); // ciphername
+    skipString(); // kdfname
+    skipString(); // kdfoptions
+    readUint32(); // numkeys
+    return readBytes(); // embedded public key blob
 }
 
 function verifySSHKeyPair(privPem, pubStr) {

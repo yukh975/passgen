@@ -1871,7 +1871,6 @@ pre#result-json {
     color: var(--text);
     padding: 10px 12px;
     resize: vertical;
-    overflow: hidden;
     outline: none;
 }
 
@@ -1879,14 +1878,27 @@ pre#result-json {
     border-color: var(--accent);
 }
 
-/* SSH actions bar */
+/* SSH footer (centered actions + right-side download) */
 
-.ssh-actions {
-    justify-content: center;
+.ssh-footer {
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
-.ssh-actions .ssh-btn {
-    flex: 0 0 auto;
+.ssh-footer-side {
+    flex: 1;
+}
+
+.ssh-footer-right {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.ssh-actions {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
 }
 
 .ssh-btn {
@@ -1915,30 +1927,6 @@ pre#result-json {
     color: var(--text);
 }
 
-/* SSH download-all button */
-
-.ssh-dl-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    width: 100%;
-    margin-top: 12px;
-    padding: 8px 0;
-    font-size: 12px;
-    font-weight: 600;
-    background: var(--border);
-    color: var(--muted);
-    border: none;
-    border-radius: 7px;
-    cursor: pointer;
-    transition: background 0.15s, color 0.15s;
-}
-
-.ssh-dl-btn:hover {
-    background: var(--btn-secondary-hover);
-    color: var(--text);
-}
 
 /* Verify SSH Key Pair modal */
 
