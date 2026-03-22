@@ -561,7 +561,7 @@ let lastPasswords = [];
 
     linkSlider(countRange, countNum, regen);
     linkSlider(qtyRange, qtyNum, regen);
-    [numStart, numEnd].forEach(el => el.addEventListener('change', regen));
+    [numStart, numEnd, numInner].forEach(el => el.addEventListener('change', regen));
     separator.addEventListener('change', regen);
 
     capitalize.addEventListener('change', () => { if (capitalize.checked) randomCap.checked = false; regen(); });
