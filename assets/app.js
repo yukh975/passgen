@@ -303,8 +303,10 @@ function loadGenSettings() {
     try {
         const s = JSON.parse(localStorage.getItem(LS_GEN)) || {};
         if ((s._v || 1) < SETTINGS_VERSION) {
-            // v2: reset pp_separator to 'dash' (was incorrectly defaulting to 'space')
-            delete s.pp_separator;
+            // v2: reset fields that had wrong defaults in earlier versions
+            delete s.pp_separator; // was defaulting to 'space', correct default is 'dash'
+            delete s.pw_length;    // was defaulting to 16, correct default is 20
+            delete s.pp_count;     // was defaulting to 4, correct default is 8
             s._v = SETTINGS_VERSION;
             localStorage.setItem(LS_GEN, JSON.stringify(s));
         }
