@@ -127,11 +127,20 @@
                 <!-- ── Passphrase ──────────────────────────────────── -->
                 <div id="panel-passphrase" class="gen-panel hidden">
 
-                    <div class="gen-row">
-                        <label class="gen-label" data-i18n="word_count_label"></label>
-                        <div class="slider-row">
-                            <input type="range" id="pp-count-range" min="2" max="10" value="8" class="slider-input">
-                            <input type="number" id="pp-count-num" min="2" max="10" value="8" class="num-input">
+                    <div class="gen-row-split">
+                        <div class="gen-field">
+                            <label class="gen-label" data-i18n="word_count_label"></label>
+                            <div class="slider-row">
+                                <input type="range" id="pp-count-range" min="2" max="10" value="8" class="slider-input">
+                                <input type="number" id="pp-count-num" min="2" max="10" value="8" class="num-input">
+                            </div>
+                        </div>
+                        <div class="gen-field">
+                            <label class="gen-label" data-i18n="count_label"></label>
+                            <div class="slider-row">
+                                <input type="range" id="pp-qty-range" min="1" max="20" value="1" class="slider-input">
+                                <input type="number" id="pp-qty-num" min="1" max="20" value="1" class="num-input">
+                            </div>
                         </div>
                     </div>
 
@@ -158,13 +167,10 @@
                     </div>
 
                     <div class="result-area">
-                        <div class="result-row">
-                            <div class="input-reveal">
-                                <input type="password" id="pp-result" class="result-input" readonly>
-                                <button type="button" id="pp-show" class="reveal-btn"></button>
-                            </div>
-                            <button type="button" id="pp-copy" class="result-action-btn" data-i18n="btn_copy"></button>
-                            <button type="button" id="pp-regen" class="result-action-btn secondary" data-i18n="btn_regen"></button>
+                        <div id="pp-result-list" class="pw-result-list"></div>
+                        <div class="pw-actions">
+                            <button type="button" id="pp-copy-all" class="result-action-btn secondary" data-i18n="btn_copy_all"></button>
+                            <button type="button" id="pp-regen" class="result-action-btn" data-i18n="btn_regen"></button>
                         </div>
                     </div>
 
@@ -173,22 +179,28 @@
                 <!-- ── PIN ────────────────────────────────────────── -->
                 <div id="panel-pin" class="gen-panel hidden">
 
-                    <div class="gen-row">
-                        <label class="gen-label" data-i18n="length_label"></label>
-                        <div class="slider-row">
-                            <input type="range" id="pin-length-range" min="4" max="12" value="6" class="slider-input">
-                            <input type="number" id="pin-length-num" min="4" max="12" value="6" class="num-input">
+                    <div class="gen-row-split">
+                        <div class="gen-field">
+                            <label class="gen-label" data-i18n="length_label"></label>
+                            <div class="slider-row">
+                                <input type="range" id="pin-length-range" min="4" max="12" value="6" class="slider-input">
+                                <input type="number" id="pin-length-num" min="4" max="12" value="6" class="num-input">
+                            </div>
+                        </div>
+                        <div class="gen-field">
+                            <label class="gen-label" data-i18n="count_label"></label>
+                            <div class="slider-row">
+                                <input type="range" id="pin-qty-range" min="1" max="20" value="1" class="slider-input">
+                                <input type="number" id="pin-qty-num" min="1" max="20" value="1" class="num-input">
+                            </div>
                         </div>
                     </div>
 
                     <div class="result-area">
-                        <div class="result-row">
-                            <div class="input-reveal">
-                                <input type="password" id="pin-result" class="result-input" readonly>
-                                <button type="button" id="pin-show" class="reveal-btn"></button>
-                            </div>
-                            <button type="button" id="pin-copy" class="result-action-btn" data-i18n="btn_copy"></button>
-                            <button type="button" id="pin-regen" class="result-action-btn secondary" data-i18n="btn_regen"></button>
+                        <div id="pin-result-list" class="pw-result-list"></div>
+                        <div class="pw-actions">
+                            <button type="button" id="pin-copy-all" class="result-action-btn secondary" data-i18n="btn_copy_all"></button>
+                            <button type="button" id="pin-regen" class="result-action-btn" data-i18n="btn_regen"></button>
                         </div>
                     </div>
 

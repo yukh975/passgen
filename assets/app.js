@@ -428,17 +428,19 @@ let lastPasswords = [];
     const s          = loadGenSettings();
     const countRange = document.getElementById('pp-count-range');
     const countNum   = document.getElementById('pp-count-num');
+    const qtyRange   = document.getElementById('pp-qty-range');
+    const qtyNum     = document.getElementById('pp-qty-num');
     const capitalize = document.getElementById('pp-capitalize');
     const randomCap  = document.getElementById('pp-random-cap');
     const numStart   = document.getElementById('pp-num-start');
     const numEnd     = document.getElementById('pp-num-end');
     const separator  = document.getElementById('pp-separator');
-    const result     = document.getElementById('pp-result');
-    const showBtn    = document.getElementById('pp-show');
-    const copyBtn    = document.getElementById('pp-copy');
+    const resultList = document.getElementById('pp-result-list');
+    const copyAllBtn = document.getElementById('pp-copy-all');
     const regenBtn   = document.getElementById('pp-regen');
 
-    if (s.pp_count     !== undefined) { countRange.value = s.pp_count; countNum.value = s.pp_count; }
+    if (s.pp_count     !== undefined) { countRange.value = s.pp_count;  countNum.value  = s.pp_count; }
+    if (s.pp_qty       !== undefined) { qtyRange.value   = s.pp_qty;    qtyNum.value    = s.pp_qty; }
     if (s.pp_capitalize !== undefined) capitalize.checked = s.pp_capitalize;
     if (s.pp_random_cap !== undefined) randomCap.checked  = s.pp_random_cap;
     if (s.pp_num_start  !== undefined) numStart.checked   = s.pp_num_start;
@@ -453,24 +455,59 @@ let lastPasswords = [];
         };
     }
 
+    let lastPhrases = [];
+
     function regen() {
-        result.value = generatePassphrase(getOpts());
+        const qty = +qtyRange.value;
+        const opts = getOpts();
+        lastPhrases = Array.from({ length: qty }, () => generatePassphrase(opts));
+
         saveGenSettings({
-            pp_count: +countRange.value, pp_capitalize: capitalize.checked,
-            pp_random_cap: randomCap.checked, pp_num_start: numStart.checked,
-            pp_num_end: numEnd.checked, pp_separator: separator.value,
+            pp_count: +countRange.value, pp_qty: qty,
+            pp_capitalize: capitalize.checked, pp_random_cap: randomCap.checked,
+            pp_num_start: numStart.checked, pp_num_end: numEnd.checked,
+            pp_separator: separator.value,
+        });
+
+        resultList.innerHTML = '';
+        lastPhrases.forEach(phrase => {
+            const row   = document.createElement('div');
+            row.className = 'pw-result-row';
+
+            const input = document.createElement('input');
+            input.type      = 'text';
+            input.className = 'result-input';
+            input.readOnly  = true;
+            input.value     = phrase;
+
+            const btn   = document.createElement('button');
+            btn.type      = 'button';
+            btn.className = 'pw-copy-btn';
+            btn.innerHTML = ICON_COPY;
+            btn.title     = t('btn_copy');
+            btn.addEventListener('click', () => {
+                navigator.clipboard.writeText(phrase).then(() => {
+                    btn.innerHTML = ICON_CHECK;
+                    btn.classList.add('copied');
+                    setTimeout(() => { btn.innerHTML = ICON_COPY; btn.classList.remove('copied'); }, 2000);
+                });
+            });
+
+            row.appendChild(input);
+            row.appendChild(btn);
+            resultList.appendChild(row);
         });
     }
 
     linkSlider(countRange, countNum, regen);
+    linkSlider(qtyRange, qtyNum, regen);
     [numStart, numEnd].forEach(el => el.addEventListener('change', regen));
     separator.addEventListener('change', regen);
 
     capitalize.addEventListener('change', () => { if (capitalize.checked) randomCap.checked = false; regen(); });
     randomCap.addEventListener('change',  () => { if (randomCap.checked)  capitalize.checked = false; regen(); });
 
-    setupReveal(result, showBtn);
-    setupCopy(copyBtn, () => result.value);
+    copyAllBtn.addEventListener('click', () => openCopyAll(lastPhrases));
     regenBtn.addEventListener('click', regen);
     regen();
 })();
@@ -483,21 +520,56 @@ let lastPasswords = [];
     const s           = loadGenSettings();
     const lengthRange = document.getElementById('pin-length-range');
     const lengthNum   = document.getElementById('pin-length-num');
-    const result      = document.getElementById('pin-result');
-    const showBtn     = document.getElementById('pin-show');
-    const copyBtn     = document.getElementById('pin-copy');
+    const qtyRange    = document.getElementById('pin-qty-range');
+    const qtyNum      = document.getElementById('pin-qty-num');
+    const resultList  = document.getElementById('pin-result-list');
+    const copyAllBtn  = document.getElementById('pin-copy-all');
     const regenBtn    = document.getElementById('pin-regen');
 
     if (s.pin_length !== undefined) { lengthRange.value = s.pin_length; lengthNum.value = s.pin_length; }
+    if (s.pin_qty    !== undefined) { qtyRange.value    = s.pin_qty;    qtyNum.value    = s.pin_qty; }
+
+    let lastPins = [];
 
     function regen() {
-        result.value = generatePin(+lengthRange.value);
-        saveGenSettings({ pin_length: +lengthRange.value });
+        const qty = +qtyRange.value;
+        lastPins = Array.from({ length: qty }, () => generatePin(+lengthRange.value));
+
+        saveGenSettings({ pin_length: +lengthRange.value, pin_qty: qty });
+
+        resultList.innerHTML = '';
+        lastPins.forEach(pin => {
+            const row   = document.createElement('div');
+            row.className = 'pw-result-row';
+
+            const input = document.createElement('input');
+            input.type      = 'text';
+            input.className = 'result-input';
+            input.readOnly  = true;
+            input.value     = pin;
+
+            const btn   = document.createElement('button');
+            btn.type      = 'button';
+            btn.className = 'pw-copy-btn';
+            btn.innerHTML = ICON_COPY;
+            btn.title     = t('btn_copy');
+            btn.addEventListener('click', () => {
+                navigator.clipboard.writeText(pin).then(() => {
+                    btn.innerHTML = ICON_CHECK;
+                    btn.classList.add('copied');
+                    setTimeout(() => { btn.innerHTML = ICON_COPY; btn.classList.remove('copied'); }, 2000);
+                });
+            });
+
+            row.appendChild(input);
+            row.appendChild(btn);
+            resultList.appendChild(row);
+        });
     }
 
     linkSlider(lengthRange, lengthNum, regen);
-    setupReveal(result, showBtn);
-    setupCopy(copyBtn, () => result.value);
+    linkSlider(qtyRange, qtyNum, regen);
+    copyAllBtn.addEventListener('click', () => openCopyAll(lastPins));
     regenBtn.addEventListener('click', regen);
     regen();
 })();
