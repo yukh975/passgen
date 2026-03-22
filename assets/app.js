@@ -100,24 +100,6 @@ function closeHelp() {
     errorBackdrop.classList.add('hidden');
 }
 
-const GEN_DEFAULTS = {
-    _v:           SETTINGS_VERSION,
-    active_tab:   'password',
-    pw_length:    20,  pw_count:    1,
-    pp_count:     8,   pp_qty:      1,  pp_separator: 'dash',
-    pin_length:   6,   pin_qty:     1,
-};
-
-document.getElementById('reset-btn').addEventListener('click', () => {
-    if (confirm(t('reset_confirm'))) {
-        localStorage.removeItem(LS_THEME);
-        localStorage.removeItem(LS_LANG);
-        // Write explicit defaults so browser form-state restoration is overridden on reload
-        localStorage.setItem(LS_GEN, JSON.stringify(GEN_DEFAULTS));
-        location.reload();
-    }
-});
-
 document.getElementById('help-btn').addEventListener('click', openHelp);
 document.getElementById('help-close').addEventListener('click', closeHelp);
 
@@ -327,6 +309,23 @@ const ICON_CHECK = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" 
 const LS_GEN = 'passgen_gen';
 
 const SETTINGS_VERSION = 2;
+
+const GEN_DEFAULTS = {
+    _v:           SETTINGS_VERSION,
+    active_tab:   'password',
+    pw_length:    20,  pw_count:    1,
+    pp_count:     8,   pp_qty:      1,  pp_separator: 'dash',
+    pin_length:   6,   pin_qty:     1,
+};
+
+document.getElementById('reset-btn')?.addEventListener('click', () => {
+    if (confirm(t('reset_confirm'))) {
+        localStorage.removeItem(LS_THEME);
+        localStorage.removeItem(LS_LANG);
+        localStorage.setItem(LS_GEN, JSON.stringify(GEN_DEFAULTS));
+        location.reload();
+    }
+});
 
 function loadGenSettings() {
     try {
