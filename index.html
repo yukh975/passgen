@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Passgen</title>
+    <link rel="stylesheet" href="assets/style.css">
+    <script src="assets/theme-init.js"></script>
+</head>
+<body>
+    <div class="container">
+
+        <div class="page-header">
+            <div class="title-row">
+                <div>
+                    <h1 data-i18n="app_title"></h1>
+                    <p class="subtitle" data-i18n-html="subtitle"></p>
+                </div>
+            </div>
+            <div class="lang-switcher">
+                <button type="button" id="theme-btn" class="theme-btn"></button>
+                <span class="lang-sep">|</span>
+                <button type="button" id="help-btn" class="help-btn" data-i18n-title="help_title">?</button>
+                <span class="lang-sep">|</span>
+                <button type="button" id="lang-en" class="lang-btn">EN</button>
+                <span class="lang-sep">|</span>
+                <button type="button" id="lang-ru" class="lang-btn">RU</button>
+            </div>
+        </div>
+
+        <!-- =====================================================
+             App content goes here
+             ===================================================== -->
+
+        <main id="app-content">
+            <!-- TODO: add your UI here -->
+        </main>
+
+        <!-- Error toast -->
+        <div id="error-backdrop" class="error-backdrop hidden"></div>
+        <div id="error" class="error hidden">
+            <span id="error-text"></span>
+            <button type="button" id="error-close" class="error-close">✕</button>
+        </div>
+
+        <!-- Help modal -->
+        <div id="help" class="help-modal hidden">
+            <div class="help-header">
+                <span data-i18n="help_title"></span>
+                <div class="help-header-right">
+                    <div class="lang-switcher">
+                        <button type="button" id="help-lang-en" class="lang-btn">EN</button>
+                        <span class="lang-sep">|</span>
+                        <button type="button" id="help-lang-ru" class="lang-btn">RU</button>
+                    </div>
+                    <button type="button" id="help-close" class="result-close">✕</button>
+                </div>
+            </div>
+            <div class="help-body" id="help-body" data-i18n-html="help_content"></div>
+        </div>
+
+        <footer class="copyright">
+            <div>© 2026 Yuriy Khachaturian</div>
+            <div>v1.0.0</div>
+        </footer>
+
+    </div>
+
+    <script src="assets/translations.js"></script>
+    <script src="assets/app.js"></script>
+</body>
+</html>
