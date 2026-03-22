@@ -19,7 +19,7 @@ A lightweight, client-side password generator with three modes: **Password**, **
 - No-repeating-characters option
 - Extra symbols field and exclude-characters field
 - **8 platform presets**: PostgreSQL, MySQL, SQL Server, Linux User, Windows Admin, Redis, RabbitMQ, High Entropy
-- Strength indicator based on Shannon entropy — 20 characters with any two or more character sets already reaches **Very Strong** (≥80 bits)
+- Strength indicator based on Shannon entropy and character variety — **Very Strong** requires ≥80 bits entropy AND 3+ character types; single-type passwords are capped at Fair
 
 ### Passphrase
 - Random word sequences from a ~500-word wordlist
@@ -38,7 +38,7 @@ A lightweight, client-side password generator with three modes: **Password**, **
 - Regenerate button shared across all results
 - Dark / light theme (saved in `localStorage`)
 - EN / RU language switcher
-- Active tab and all generator settings saved across page reloads
+- Active tab and all generator settings saved across page reloads; **Reset settings** button (↺) in the header clears all saved settings
 - Cryptographically secure randomness via `window.crypto.getRandomValues()`
 - Fully client-side — no server, no tracking
 

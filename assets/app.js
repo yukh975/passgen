@@ -100,6 +100,15 @@ function closeHelp() {
     errorBackdrop.classList.add('hidden');
 }
 
+document.getElementById('reset-btn').addEventListener('click', () => {
+    if (confirm(t('reset_confirm'))) {
+        localStorage.removeItem(LS_THEME);
+        localStorage.removeItem(LS_LANG);
+        localStorage.removeItem(LS_GEN);
+        location.reload();
+    }
+});
+
 document.getElementById('help-btn').addEventListener('click', openHelp);
 document.getElementById('help-close').addEventListener('click', closeHelp);
 
@@ -225,18 +234,19 @@ function generatePin(length) {
 
 function getStrength(password) {
     if (!password) return 0;
-    let pool = 0;
-    if (/[a-z]/.test(password))        pool += 26;
-    if (/[A-Z]/.test(password))        pool += 26;
-    if (/[0-9]/.test(password))        pool += 10;
-    if (/[^a-zA-Z0-9]/.test(password)) pool += 32;
+    let pool = 0, types = 0;
+    if (/[a-z]/.test(password))        { pool += 26; types++; }
+    if (/[A-Z]/.test(password))        { pool += 26; types++; }
+    if (/[0-9]/.test(password))        { pool += 10; types++; }
+    if (/[^a-zA-Z0-9]/.test(password)) { pool += 32; types++; }
     if (pool === 0) return 1;
     const entropy = password.length * Math.log2(pool);
-    if (entropy < 28) return 1; // < 28 bits  — Very Weak
-    if (entropy < 40) return 2; // 28–39 bits  — Weak
-    if (entropy < 60) return 3; // 40–59 bits  — Fair
-    if (entropy < 80) return 4; // 60–79 bits  — Strong
-    return 5;                   // ≥ 80 bits   — Very Strong
+    // Strong/Very Strong require character variety in addition to length
+    if (entropy < 28)               return 1; // Very Weak
+    if (entropy < 40)               return 2; // Weak
+    if (entropy < 60 || types < 2)  return 3; // Fair  (single-type capped here)
+    if (entropy < 80 || types < 3)  return 4; // Strong (2-type capped here)
+    return 5;                                  // Very Strong: ≥80 bits + 3+ types
 }
 
 // ============================================================
@@ -350,9 +360,9 @@ let lastPasswords = [];
     const barEl       = document.getElementById('pw-strength-bar');
     const textEl      = document.getElementById('pw-strength-text');
 
-    // Restore saved settings
-    if (s.pw_length    !== undefined) { lengthRange.value = s.pw_length;  lengthNum.value  = s.pw_length; }
-    if (s.pw_count     !== undefined) { countRange.value  = s.pw_count;   countNum.value   = s.pw_count; }
+    // Restore saved settings (read back from range to get browser-clamped value)
+    if (s.pw_length !== undefined) { lengthRange.value = s.pw_length; lengthNum.value = lengthRange.value; }
+    if (s.pw_count  !== undefined) { countRange.value  = s.pw_count;  countNum.value  = countRange.value; }
     if (s.pw_upper     !== undefined) upper.checked     = s.pw_upper;
     if (s.pw_lower     !== undefined) lower.checked     = s.pw_lower;
     if (s.pw_numbers   !== undefined) numbers.checked   = s.pw_numbers;
@@ -457,8 +467,8 @@ let lastPasswords = [];
     const copyAllBtn = document.getElementById('pp-copy-all');
     const regenBtn   = document.getElementById('pp-regen');
 
-    if (s.pp_count     !== undefined) { countRange.value = s.pp_count;  countNum.value  = s.pp_count; }
-    if (s.pp_qty       !== undefined) { qtyRange.value   = s.pp_qty;    qtyNum.value    = s.pp_qty; }
+    if (s.pp_count !== undefined) { countRange.value = s.pp_count; countNum.value = countRange.value; }
+    if (s.pp_qty   !== undefined) { qtyRange.value   = s.pp_qty;   qtyNum.value   = qtyRange.value; }
     if (s.pp_capitalize !== undefined) capitalize.checked = s.pp_capitalize;
     if (s.pp_random_cap !== undefined) randomCap.checked  = s.pp_random_cap;
     if (s.pp_num_start  !== undefined) numStart.checked   = s.pp_num_start;
@@ -546,8 +556,8 @@ let lastPasswords = [];
     const copyAllBtn  = document.getElementById('pin-copy-all');
     const regenBtn    = document.getElementById('pin-regen');
 
-    if (s.pin_length !== undefined) { lengthRange.value = s.pin_length; lengthNum.value = s.pin_length; }
-    if (s.pin_qty    !== undefined) { qtyRange.value    = s.pin_qty;    qtyNum.value    = s.pin_qty; }
+    if (s.pin_length !== undefined) { lengthRange.value = s.pin_length; lengthNum.value = lengthRange.value; }
+    if (s.pin_qty    !== undefined) { qtyRange.value    = s.pin_qty;    qtyNum.value    = qtyRange.value; }
 
     let lastPins = [];
 

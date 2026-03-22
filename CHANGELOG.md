@@ -15,7 +15,9 @@
 - Regenerate button shared across all results on each tab
 - Results visible by default (no show/hide toggle)
 - Cryptographically secure randomness via `window.crypto.getRandomValues()` with rejection sampling to eliminate modulo bias
-- Strength indicator based on Shannon entropy (bits = length × log₂(pool size)); thresholds: <28 Very Weak, 28–39 Weak, 40–59 Fair, 60–79 Strong, ≥80 Very Strong
+- Strength indicator based on Shannon entropy + character variety: Strong requires 2+ types, Very Strong requires 3+ types and ≥80 bits; single-character-type passwords are capped at Fair regardless of length
+- Reset settings button (↺) clears all localStorage and reloads the page
+- Settings restore now uses browser-clamped range values, fixing a bug where out-of-range values from localStorage caused fields to display stale numbers
 
 ### UI
 - Dark/light theme toggle (sun/moon icon) in the header; dark theme is default
