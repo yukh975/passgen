@@ -193,13 +193,14 @@ function generatePassword({ length, upper, lower, numbers, symbols, nosimilar, n
     return result;
 }
 
-function generatePassphrase({ count, capitalize, randomCap, numStart, numEnd, separator }) {
+function generatePassphrase({ count, capitalize, randomCap, numStart, numEnd, numInner, separator }) {
     const words = [];
     for (let i = 0; i < count; i++) {
         let w = WORDLIST[secureRandomInt(WORDLIST.length)];
         if (capitalize)      w = w[0].toUpperCase() + w.slice(1).toLowerCase();
         else if (randomCap)  w = [...w].map(c => secureRandomInt(2) ? c.toUpperCase() : c.toLowerCase()).join('');
         else                 w = w.toLowerCase();
+        if (numInner && secureRandomInt(2)) w += secureRandomInt(10);
         words.push(w);
     }
     const SEPS = { space: ' ', dash: '-', dot: '.', underscore: '_', none: '' };
@@ -296,9 +297,19 @@ const ICON_CHECK = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" 
 
 const LS_GEN = 'passgen_gen';
 
+const SETTINGS_VERSION = 2;
+
 function loadGenSettings() {
-    try { return JSON.parse(localStorage.getItem(LS_GEN)) || {}; }
-    catch { return {}; }
+    try {
+        const s = JSON.parse(localStorage.getItem(LS_GEN)) || {};
+        if ((s._v || 1) < SETTINGS_VERSION) {
+            // v2: reset pp_separator to 'dash' (was incorrectly defaulting to 'space')
+            delete s.pp_separator;
+            s._v = SETTINGS_VERSION;
+            localStorage.setItem(LS_GEN, JSON.stringify(s));
+        }
+        return s;
+    } catch { return {}; }
 }
 
 function saveGenSettings(patch) {
@@ -434,6 +445,7 @@ let lastPasswords = [];
     const randomCap  = document.getElementById('pp-random-cap');
     const numStart   = document.getElementById('pp-num-start');
     const numEnd     = document.getElementById('pp-num-end');
+    const numInner   = document.getElementById('pp-num-inner');
     const separator  = document.getElementById('pp-separator');
     const resultList = document.getElementById('pp-result-list');
     const copyAllBtn = document.getElementById('pp-copy-all');
@@ -445,13 +457,15 @@ let lastPasswords = [];
     if (s.pp_random_cap !== undefined) randomCap.checked  = s.pp_random_cap;
     if (s.pp_num_start  !== undefined) numStart.checked   = s.pp_num_start;
     if (s.pp_num_end    !== undefined) numEnd.checked     = s.pp_num_end;
+    if (s.pp_num_inner  !== undefined) numInner.checked   = s.pp_num_inner;
     if (s.pp_separator  !== undefined) separator.value    = s.pp_separator;
 
     function getOpts() {
         return {
             count: +countRange.value, capitalize: capitalize.checked,
             randomCap: randomCap.checked, numStart: numStart.checked,
-            numEnd: numEnd.checked, separator: separator.value,
+            numEnd: numEnd.checked, numInner: numInner.checked,
+            separator: separator.value,
         };
     }
 
@@ -466,7 +480,7 @@ let lastPasswords = [];
             pp_count: +countRange.value, pp_qty: qty,
             pp_capitalize: capitalize.checked, pp_random_cap: randomCap.checked,
             pp_num_start: numStart.checked, pp_num_end: numEnd.checked,
-            pp_separator: separator.value,
+            pp_num_inner: numInner.checked, pp_separator: separator.value,
         });
 
         resultList.innerHTML = '';
@@ -613,12 +627,20 @@ document.getElementById('copy-all-btn')?.addEventListener('click', () => {
 //  Generator — tabs
 // ============================================================
 
+function activateTab(name) {
+    document.querySelectorAll('.gen-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
+    document.querySelectorAll('.gen-panel').forEach(p => p.classList.add('hidden'));
+    const panel = document.getElementById('panel-' + name);
+    if (panel) panel.classList.remove('hidden');
+}
+
+const savedTab = loadGenSettings().active_tab;
+if (savedTab) activateTab(savedTab);
+
 document.querySelectorAll('.gen-tab').forEach(tab => {
     tab.addEventListener('click', () => {
-        document.querySelectorAll('.gen-tab').forEach(t => t.classList.remove('active'));
-        document.querySelectorAll('.gen-panel').forEach(p => p.classList.add('hidden'));
-        tab.classList.add('active');
-        document.getElementById('panel-' + tab.dataset.tab).classList.remove('hidden');
+        activateTab(tab.dataset.tab);
+        saveGenSettings({ active_tab: tab.dataset.tab });
     });
 });
 
