@@ -68,4 +68,8 @@ npx serve .
 
 ---
 
+**Автор:** Yuriy Khachaturian (powered by [Claude.AI](https://claude.ai)), 2026
+
+---
+
 🌐 [English](README.md) | **Русский**
