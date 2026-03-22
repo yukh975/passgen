@@ -414,9 +414,13 @@ let lastPasswords = [];
         updateStrength(lastPasswords[0] || '', barEl, textEl);
 
         resultList.innerHTML = '';
-        lastPasswords.forEach(pw => {
+        lastPasswords.forEach((pw, i) => {
             const row   = document.createElement('div');
             row.className = 'pw-result-row';
+
+            const num = document.createElement('span');
+            num.className   = 'pw-result-num';
+            num.textContent = i + 1;
 
             const input = document.createElement('input');
             input.type      = 'text';
@@ -437,6 +441,7 @@ let lastPasswords = [];
                 });
             });
 
+            row.appendChild(num);
             row.appendChild(input);
             row.appendChild(btn);
             resultList.appendChild(row);
@@ -520,9 +525,13 @@ let lastPasswords = [];
         });
 
         resultList.innerHTML = '';
-        lastPhrases.forEach(phrase => {
+        lastPhrases.forEach((phrase, i) => {
             const row   = document.createElement('div');
             row.className = 'pw-result-row';
+
+            const num = document.createElement('span');
+            num.className   = 'pw-result-num';
+            num.textContent = i + 1;
 
             const input = document.createElement('input');
             input.type      = 'text';
@@ -543,6 +552,7 @@ let lastPasswords = [];
                 });
             });
 
+            row.appendChild(num);
             row.appendChild(input);
             row.appendChild(btn);
             resultList.appendChild(row);
@@ -590,9 +600,13 @@ let lastPasswords = [];
         saveGenSettings({ pin_length: +lengthRange.value, pin_qty: qty });
 
         resultList.innerHTML = '';
-        lastPins.forEach(pin => {
+        lastPins.forEach((pin, i) => {
             const row   = document.createElement('div');
             row.className = 'pw-result-row';
+
+            const num = document.createElement('span');
+            num.className   = 'pw-result-num';
+            num.textContent = i + 1;
 
             const input = document.createElement('input');
             input.type      = 'text';

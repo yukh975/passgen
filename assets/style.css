@@ -1791,6 +1791,15 @@ pre#result-json {
     gap: 8px;
 }
 
+.pw-result-num {
+    min-width: 2ch;
+    text-align: right;
+    font-size: 0.75rem;
+    color: var(--muted);
+    user-select: none;
+    flex-shrink: 0;
+}
+
 .pw-result-row {
     display: flex;
     align-items: center;

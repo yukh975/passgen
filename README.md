@@ -33,7 +33,7 @@ A lightweight, client-side password generator with three modes: **Password**, **
 - Numeric code, configurable length (4–12 digits, default 6)
 
 ### General
-- Generate multiple results at once (count slider 1–20) on all three tabs
+- Generate multiple results at once (count slider 1–50) on all three tabs
 - Per-result copy button; **Copy all** button opens a modal with all results
 - Regenerate button shared across all results
 - Dark / light theme (saved in `localStorage`)
