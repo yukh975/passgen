@@ -9,7 +9,7 @@
 [![JavaScript](https://img.shields.io/badge/JavaScript-ES2020-f7df1e?logo=javascript&logoColor=black)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE.md)
 
-**A lightweight, fully client-side password and SSH key generator. Supports Password, Passphrase, PIN, and SSH Key modes. All generation happens in the browser using the Web Crypto API — nothing is sent to any server.**
+**A lightweight, fully client-side password and key generator. Supports Password, Passphrase, PIN, SSH Key, and GPG Key modes. All generation happens in the browser using the Web Crypto API — nothing is sent to any server.**
 
 ---
 
@@ -44,9 +44,18 @@ Current version is available at **https://yukh.net/passgen/**
 ### SSH Key
 - Generate **ED25519** or **RSA** key pairs (2048 / 3072 / 4096 bits) directly in the browser
 - Keys exported in standard OpenSSH format — compatible with `ssh-keygen` output
+- Optional **passphrase** encrypts the private key with AES-256-CTR + bcrypt KDF (16 rounds) — identical to `ssh-keygen -a 16` output
 - Per-key copy button; **Download archive** saves both keys as a single ZIP file (`<name>.key` + `<name>.pub`)
-- **Verify keys** modal: paste or upload a private and public key to check they form a valid pair — supports file upload (`.key`, `.pub`, `.pem`)
-- ZIP created in pure JS with no external libraries (CRC-32 + uncompressed ZIP format)
+- **Verify keys** modal: paste or upload a private and public key to check they form a valid pair; passphrase-protected keys are fully supported — supports file upload (`.key`, `.pub`, `.pem`)
+- bcrypt and ZIP implemented in pure JS with no external libraries
+
+### GPG Key
+- Generate **Ed25519** or **RSA** key pairs (3072 / 4096 bits) directly in the browser
+- Keys exported in ASCII-armored OpenPGP v4 format (`-----BEGIN PGP PRIVATE KEY BLOCK-----`)
+- Includes self-signed User ID — keys are importable with `gpg --import` without additional steps
+- Optional **User ID** field (`Name <email>` format); defaults to a generic UID if left empty
+- Per-key copy button; **Download archive** saves both `.asc` and `.pub.asc` files as a ZIP
+- OpenPGP packet format, CRC-24, and self-signature implemented in pure JS with no external libraries
 
 ### General
 - Generate 1–50 results at once on all three tabs
@@ -82,6 +91,8 @@ passgen/
 ├── index.html              # UI shell
 ├── assets/
 │   ├── app.js              # Generator logic, settings, i18n
+│   ├── bcrypt.js           # bcrypt_pbkdf implementation (pure JS)
+│   ├── pgp.js              # OpenPGP v4 key generation (pure JS)
 │   ├── translations.js     # UI strings (EN / RU)
 │   ├── wordlist.js         # Built-in ~500-word wordlist
 │   ├── style.css           # Styles (dark / light theme)
