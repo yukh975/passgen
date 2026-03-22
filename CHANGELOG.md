@@ -10,6 +10,7 @@
 - **SSH Key tab**: generate ED25519 and RSA key pairs (2048 / 3072 / 4096 bits) directly in the browser using the Web Crypto API; keys are exported in standard OpenSSH format (`-----BEGIN OPENSSH PRIVATE KEY-----`) with matching `.pub`-style public key line; copy buttons for both private and public key
 - **Download archive**: single button (right side of action bar, appears after generation) downloads both keys as a ZIP file (`<name>.key` + `<name>.pub`) with paired random base filename; ZIP built in pure JS without external libraries
 - **Verify keys**: modal window to check that a private and public key form a valid pair — paste or upload each key, supports file upload (`.key`, `.pub`, `.pem`)
+- **SSH key passphrase**: optional passphrase field in the SSH Key tab; when filled, the private key is encrypted with AES-256-CTR + bcrypt KDF (16 rounds), identical to `ssh-keygen` output — compatible with standard `ssh`/`ssh-keygen` tools; bcrypt implemented in pure JS without external libraries
 
 ### Fixes
 - SSH key verification: rewritten OpenSSH private key parser using `DataView.getUint32` and line-by-line PEM stripping — eliminated false "Truncated key data" errors

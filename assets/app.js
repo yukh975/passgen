@@ -784,9 +784,53 @@ function buildOsshBlob(pubBlob, privSection) {
     );
 }
 
+// Pad to 16-byte boundary (AES block size for encrypted keys)
+function osshPadding16(bytes) {
+    const rem = bytes.length % 16;
+    if (rem === 0) return bytes;
+    const pad = 16 - rem;
+    const result = new Uint8Array(bytes.length + pad);
+    result.set(bytes);
+    for (let i = 0; i < pad; i++) result[bytes.length + i] = i + 1;
+    return result;
+}
+
+async function buildOsshBlobEncrypted(pubBlob, privSection, passphrase) {
+    if (!passphrase) return buildOsshBlob(pubBlob, privSection);
+
+    const ROUNDS = 16;
+    const salt   = new Uint8Array(16);
+    crypto.getRandomValues(salt);
+
+    const passBytes  = new TextEncoder().encode(passphrase);
+    const keyMat     = await bcryptPbkdf(passBytes, salt, ROUNDS, 64);
+    const aesKeyData = keyMat.slice(0, 32);
+    const aesIV      = keyMat.slice(32, 48);
+
+    const padded = osshPadding16(privSection);
+
+    const aesKey   = await crypto.subtle.importKey('raw', aesKeyData, { name: 'AES-CTR' }, false, ['encrypt']);
+    const encBuf   = await crypto.subtle.encrypt({ name: 'AES-CTR', counter: aesIV, length: 64 }, aesKey, padded);
+    const encBytes = new Uint8Array(encBuf);
+
+    // kdfoptions: sshBytes(salt) + sshUint32(rounds)
+    const kdfOpts = concatBytes(sshBytes(salt), sshUint32(ROUNDS));
+
+    const magic = new TextEncoder().encode('openssh-key-v1\0');
+    return concatBytes(
+        magic,
+        sshString('aes256-ctr'),   // ciphername
+        sshString('bcrypt'),       // kdfname
+        sshBytes(kdfOpts),         // kdfoptions
+        sshUint32(1),              // num keys
+        sshBytes(pubBlob),         // public key
+        sshBytes(encBytes),        // encrypted private section (no outer padding; CTR is stream)
+    );
+}
+
 // ── Key generation ────────────────────────────────────────────
 
-async function generateEd25519Pair() {
+async function generateEd25519Pair(passphrase) {
     const kp = await crypto.subtle.generateKey({ name: 'Ed25519' }, true, ['sign', 'verify']);
     const pubJwk  = await crypto.subtle.exportKey('jwk', kp.publicKey);
     const privJwk = await crypto.subtle.exportKey('jwk', kp.privateKey);
@@ -808,10 +852,11 @@ async function generateEd25519Pair() {
         sshString(''),
     );
 
-    return { privateKey: formatOsshPem(buildOsshBlob(pubBlob, privSection)), publicKey: pubLine };
+    const blob = await buildOsshBlobEncrypted(pubBlob, privSection, passphrase);
+    return { privateKey: formatOsshPem(blob), publicKey: pubLine };
 }
 
-async function generateRSAPair(bits) {
+async function generateRSAPair(bits, passphrase) {
     const kp = await crypto.subtle.generateKey(
         { name: 'RSASSA-PKCS1-v1_5', modulusLength: bits, publicExponent: new Uint8Array([1, 0, 1]), hash: 'SHA-256' },
         true, ['sign', 'verify'],
@@ -839,7 +884,8 @@ async function generateRSAPair(bits) {
         sshString(''),
     );
 
-    return { privateKey: formatOsshPem(buildOsshBlob(pubBlob, privSection)), publicKey: pubLine };
+    const blob = await buildOsshBlobEncrypted(pubBlob, privSection, passphrase);
+    return { privateKey: formatOsshPem(blob), publicKey: pubLine };
 }
 
 // ── ZIP helper (no dependencies) ─────────────────────────────
@@ -1020,9 +1066,10 @@ function downloadZip(zipName, files) {
         generateBtn.disabled    = true;
         generateBtn.textContent = t('ssh_generating');
         try {
-            const type     = typeSelect.value;
-            const bits     = +bitsSelect.value;
-            const pair     = type === 'ed25519' ? await generateEd25519Pair() : await generateRSAPair(bits);
+            const type       = typeSelect.value;
+            const bits       = +bitsSelect.value;
+            const passphrase = document.getElementById('ssh-passphrase')?.value || '';
+            const pair       = type === 'ed25519' ? await generateEd25519Pair(passphrase) : await generateRSAPair(bits, passphrase);
             const randBuf  = new Uint8Array(4);
             crypto.getRandomValues(randBuf);
             const baseName = Array.from(randBuf, b => b.toString(16).padStart(2, '0')).join('');

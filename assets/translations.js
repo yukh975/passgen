@@ -5,7 +5,7 @@ const TRANSLATIONS = {
         app_title:       'Password Generator',
         subtitle:        'Secure Passwords Generator',
         help_title:      'Help',
-        help_content:    '<h3>Password</h3><p>Configure length, character sets, and optional constraints. Use <strong>Presets</strong> to apply platform-specific settings (PostgreSQL, MySQL, Redis, etc.).</p><h3>Passphrase</h3><p>Generates a sequence of random words. Easier to remember, strong enough for most uses. Adjust word count, capitalization, separator, and optional numbers.</p><h3>PIN</h3><p>A numeric code of 4–12 digits generated with a cryptographically secure random source.</p><h3>SSH Key</h3><p>Generates ED25519 or RSA (2048/3072/4096-bit) key pairs directly in the browser using the Web Crypto API. Keys are exported in standard OpenSSH format. Use <strong>Download archive</strong> to save both keys as a ZIP file. Use <strong>Verify keys</strong> to check that a private and public key form a valid pair.</p><h3>Strength</h3><p>Estimated from length and character variety. For best security use 16+ characters with all character sets enabled.</p>',
+        help_content:    '<h3>Password</h3><p>Configure length, character sets, and optional constraints. Use <strong>Presets</strong> to apply platform-specific settings (PostgreSQL, MySQL, Redis, etc.).</p><h3>Passphrase</h3><p>Generates a sequence of random words. Easier to remember, strong enough for most uses. Adjust word count, capitalization, separator, and optional numbers.</p><h3>PIN</h3><p>A numeric code of 4–12 digits generated with a cryptographically secure random source.</p><h3>SSH Key</h3><p>Generates ED25519 or RSA (2048/3072/4096-bit) key pairs directly in the browser using the Web Crypto API. Keys are exported in standard OpenSSH format. Optionally enter a <strong>Passphrase</strong> to encrypt the private key with AES-256-CTR + bcrypt — compatible with standard <code>ssh</code>/<code>ssh-keygen</code> tools. Use <strong>Download archive</strong> to save both keys as a ZIP file. Use <strong>Verify keys</strong> to check that a private and public key form a valid pair.</p><h3>Strength</h3><p>Estimated from length and character variety. For best security use 16+ characters with all character sets enabled.</p>',
         theme_to_light:  'Switch to light theme',
         theme_to_dark:   'Switch to dark theme',
         reset_title:     'Reset settings',
@@ -81,13 +81,15 @@ const TRANSLATIONS = {
         ssh_verify_empty:    'Paste or upload both keys',
         ssh_verify_priv_ph:  '-----BEGIN OPENSSH PRIVATE KEY-----\n…\n-----END OPENSSH PRIVATE KEY-----',
         ssh_verify_pub_ph:   'ssh-ed25519 AAAA… or ssh-rsa AAAA…',
+        ssh_passphrase_label: 'Passphrase (optional)',
+        ssh_passphrase_ph:   'Leave empty for unencrypted key',
     },
     ru: {
         // ── Оболочка ─────────────────────────────────────────────
         app_title:       'Password Generator',
         subtitle:        'Генератор надёжных паролей',
         help_title:      'Справка',
-        help_content:    '<h3>Пароль</h3><p>Настройте длину, наборы символов и ограничения. Используйте <strong>Пресеты</strong> для платформ (PostgreSQL, MySQL, Redis и т.д.).</p><h3>Фраза-пароль</h3><p>Набор случайных слов. Легко запомнить, достаточно надёжный для большинства задач. Настраиваются количество слов, регистр, разделитель и цифры.</p><h3>PIN</h3><p>Числовой код 4–12 цифр на основе криптографически стойкого генератора.</p><h3>SSH-ключ</h3><p>Генерация пар ключей ED25519 или RSA (2048/3072/4096 бит) прямо в браузере через Web Crypto API. Ключи экспортируются в стандартном формате OpenSSH. Кнопка <strong>Скачать архив</strong> сохраняет оба ключа одним ZIP-файлом. Кнопка <strong>Проверить ключи</strong> позволяет убедиться, что приватный и публичный ключ образуют верную пару.</p><h3>Надёжность</h3><p>Оценивается по длине и разнообразию символов. Для максимальной защиты используйте 16+ символов со всеми включёнными наборами.</p>',
+        help_content:    '<h3>Пароль</h3><p>Настройте длину, наборы символов и ограничения. Используйте <strong>Пресеты</strong> для платформ (PostgreSQL, MySQL, Redis и т.д.).</p><h3>Фраза-пароль</h3><p>Набор случайных слов. Легко запомнить, достаточно надёжный для большинства задач. Настраиваются количество слов, регистр, разделитель и цифры.</p><h3>PIN</h3><p>Числовой код 4–12 цифр на основе криптографически стойкого генератора.</p><h3>SSH-ключ</h3><p>Генерация пар ключей ED25519 или RSA (2048/3072/4096 бит) прямо в браузере через Web Crypto API. Ключи экспортируются в стандартном формате OpenSSH. Поле <strong>Пароль ключа</strong> позволяет зашифровать приватный ключ (AES-256-CTR + bcrypt) — совместимо со стандартными инструментами <code>ssh</code>/<code>ssh-keygen</code>. Кнопка <strong>Скачать архив</strong> сохраняет оба ключа одним ZIP-файлом. Кнопка <strong>Проверить ключи</strong> позволяет убедиться, что приватный и публичный ключ образуют верную пару.</p><h3>Надёжность</h3><p>Оценивается по длине и разнообразию символов. Для максимальной защиты используйте 16+ символов со всеми включёнными наборами.</p>',
         theme_to_light:  'Светлая тема',
         theme_to_dark:   'Тёмная тема',
         reset_title:     'Сбросить настройки',
@@ -163,5 +165,7 @@ const TRANSLATIONS = {
         ssh_verify_empty:    'Вставьте или загрузите оба ключа',
         ssh_verify_priv_ph:  '-----BEGIN OPENSSH PRIVATE KEY-----\n…\n-----END OPENSSH PRIVATE KEY-----',
         ssh_verify_pub_ph:   'ssh-ed25519 AAAA… или ssh-rsa AAAA…',
+        ssh_passphrase_label: 'Пароль ключа (необязательно)',
+        ssh_passphrase_ph:   'Оставьте пустым для незащищённого ключа',
     },
 };
