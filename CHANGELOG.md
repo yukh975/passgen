@@ -4,7 +4,7 @@
 
 # Changelog
 
-## v1.0.0 — unreleased
+## v1.0.0 — 2026-03-22
 
 ### Features
 - **Password tab**: length slider (4–64, default 20), uppercase / lowercase / numbers / symbols toggles, exclude similar characters (I, l, 1, O, 0), no-repeating-characters option, extra symbols field, exclude characters field, 8 platform presets (PostgreSQL, MySQL, SQL Server, Linux User, Windows Admin, Redis, RabbitMQ, High Entropy), strength bar (1–5 scale with color coding)
