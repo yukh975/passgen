@@ -165,7 +165,7 @@ const PRESETS = {
 //  Generator — generation functions
 // ============================================================
 
-function generatePassword({ length, upper, lower, numbers, symbols, nosimilar, custom, exclude }) {
+function generatePassword({ length, upper, lower, numbers, symbols, nosimilar, norepeat, custom, exclude }) {
     let chars = '';
     if (upper)   chars += CHARS.upper;
     if (lower)   chars += CHARS.lower;
@@ -178,6 +178,15 @@ function generatePassword({ length, upper, lower, numbers, symbols, nosimilar, c
     if (exclude)   { const ex = new Set(exclude); arr = arr.filter(c => !ex.has(c)); }
 
     if (!arr.length) return '';
+
+    if (norepeat) {
+        // Fisher-Yates shuffle, then take first `length` chars (capped at arr.length)
+        for (let i = arr.length - 1; i > 0; i--) {
+            const j = secureRandomInt(i + 1);
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        return arr.slice(0, Math.min(length, arr.length)).join('');
+    }
 
     let result = '';
     for (let i = 0; i < length; i++) result += arr[secureRandomInt(arr.length)];
@@ -282,10 +291,29 @@ const ICON_COPY = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" s
 const ICON_CHECK = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
 
 // ============================================================
+//  Settings persistence
+// ============================================================
+
+const LS_GEN = 'passgen_gen';
+
+function loadGenSettings() {
+    try { return JSON.parse(localStorage.getItem(LS_GEN)) || {}; }
+    catch { return {}; }
+}
+
+function saveGenSettings(patch) {
+    const s = loadGenSettings();
+    localStorage.setItem(LS_GEN, JSON.stringify(Object.assign(s, patch)));
+}
+
+// ============================================================
 //  Generator — Password tab
 // ============================================================
 
+let lastPasswords = [];
+
 (function setupPassword() {
+    const s           = loadGenSettings();
     const lengthRange = document.getElementById('pw-length-range');
     const lengthNum   = document.getElementById('pw-length-num');
     const countRange  = document.getElementById('pw-count-range');
@@ -295,41 +323,63 @@ const ICON_CHECK = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" 
     const numbers     = document.getElementById('pw-numbers');
     const symbols     = document.getElementById('pw-symbols');
     const nosimilar   = document.getElementById('pw-nosimilar');
+    const norepeat    = document.getElementById('pw-norepeat');
     const custom      = document.getElementById('pw-custom');
     const exclude     = document.getElementById('pw-exclude');
     const preset      = document.getElementById('pw-preset');
     const resultList  = document.getElementById('pw-result-list');
+    const copyAllBtn  = document.getElementById('pw-copy-all');
     const regenBtn    = document.getElementById('pw-regen');
     const barEl       = document.getElementById('pw-strength-bar');
     const textEl      = document.getElementById('pw-strength-text');
+
+    // Restore saved settings
+    if (s.pw_length    !== undefined) { lengthRange.value = s.pw_length;  lengthNum.value  = s.pw_length; }
+    if (s.pw_count     !== undefined) { countRange.value  = s.pw_count;   countNum.value   = s.pw_count; }
+    if (s.pw_upper     !== undefined) upper.checked     = s.pw_upper;
+    if (s.pw_lower     !== undefined) lower.checked     = s.pw_lower;
+    if (s.pw_numbers   !== undefined) numbers.checked   = s.pw_numbers;
+    if (s.pw_symbols   !== undefined) symbols.checked   = s.pw_symbols;
+    if (s.pw_nosimilar !== undefined) nosimilar.checked = s.pw_nosimilar;
+    if (s.pw_norepeat  !== undefined) norepeat.checked  = s.pw_norepeat;
+    if (s.pw_custom    !== undefined) custom.value      = s.pw_custom;
+    if (s.pw_exclude   !== undefined) exclude.value     = s.pw_exclude;
 
     function getOpts() {
         return {
             length: +lengthRange.value, upper: upper.checked, lower: lower.checked,
             numbers: numbers.checked, symbols: symbols.checked, nosimilar: nosimilar.checked,
-            custom: custom.value, exclude: exclude.value,
+            norepeat: norepeat.checked, custom: custom.value, exclude: exclude.value,
         };
     }
 
     function regen() {
         const count = +countRange.value;
         const opts  = getOpts();
-        const passwords = Array.from({ length: count }, () => generatePassword(opts));
+        lastPasswords = Array.from({ length: count }, () => generatePassword(opts));
 
-        updateStrength(passwords[0] || '', barEl, textEl);
+        saveGenSettings({
+            pw_length: +lengthRange.value, pw_count: count,
+            pw_upper: upper.checked, pw_lower: lower.checked,
+            pw_numbers: numbers.checked, pw_symbols: symbols.checked,
+            pw_nosimilar: nosimilar.checked, pw_norepeat: norepeat.checked,
+            pw_custom: custom.value, pw_exclude: exclude.value,
+        });
+
+        updateStrength(lastPasswords[0] || '', barEl, textEl);
 
         resultList.innerHTML = '';
-        passwords.forEach(pw => {
-            const row = document.createElement('div');
+        lastPasswords.forEach(pw => {
+            const row   = document.createElement('div');
             row.className = 'pw-result-row';
 
             const input = document.createElement('input');
-            input.type     = 'text';
+            input.type      = 'text';
             input.className = 'result-input';
-            input.readOnly = true;
-            input.value    = pw;
+            input.readOnly  = true;
+            input.value     = pw;
 
-            const btn = document.createElement('button');
+            const btn   = document.createElement('button');
             btn.type      = 'button';
             btn.className = 'pw-copy-btn';
             btn.innerHTML = ICON_COPY;
@@ -350,7 +400,7 @@ const ICON_CHECK = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" 
 
     linkSlider(lengthRange, lengthNum, regen);
     linkSlider(countRange, countNum, regen);
-    [upper, lower, numbers, symbols, nosimilar].forEach(el => el.addEventListener('change', regen));
+    [upper, lower, numbers, symbols, nosimilar, norepeat].forEach(el => el.addEventListener('change', regen));
     [custom, exclude].forEach(el => el.addEventListener('input', regen));
 
     preset.addEventListener('change', () => {
@@ -365,6 +415,7 @@ const ICON_CHECK = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" 
         regen();
     });
 
+    copyAllBtn.addEventListener('click', () => openCopyAll(lastPasswords));
     regenBtn.addEventListener('click', regen);
     regen();
 })();
@@ -374,6 +425,7 @@ const ICON_CHECK = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" 
 // ============================================================
 
 (function setupPassphrase() {
+    const s          = loadGenSettings();
     const countRange = document.getElementById('pp-count-range');
     const countNum   = document.getElementById('pp-count-num');
     const capitalize = document.getElementById('pp-capitalize');
@@ -386,6 +438,13 @@ const ICON_CHECK = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" 
     const copyBtn    = document.getElementById('pp-copy');
     const regenBtn   = document.getElementById('pp-regen');
 
+    if (s.pp_count     !== undefined) { countRange.value = s.pp_count; countNum.value = s.pp_count; }
+    if (s.pp_capitalize !== undefined) capitalize.checked = s.pp_capitalize;
+    if (s.pp_random_cap !== undefined) randomCap.checked  = s.pp_random_cap;
+    if (s.pp_num_start  !== undefined) numStart.checked   = s.pp_num_start;
+    if (s.pp_num_end    !== undefined) numEnd.checked     = s.pp_num_end;
+    if (s.pp_separator  !== undefined) separator.value    = s.pp_separator;
+
     function getOpts() {
         return {
             count: +countRange.value, capitalize: capitalize.checked,
@@ -394,7 +453,14 @@ const ICON_CHECK = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" 
         };
     }
 
-    function regen() { result.value = generatePassphrase(getOpts()); }
+    function regen() {
+        result.value = generatePassphrase(getOpts());
+        saveGenSettings({
+            pp_count: +countRange.value, pp_capitalize: capitalize.checked,
+            pp_random_cap: randomCap.checked, pp_num_start: numStart.checked,
+            pp_num_end: numEnd.checked, pp_separator: separator.value,
+        });
+    }
 
     linkSlider(countRange, countNum, regen);
     [numStart, numEnd].forEach(el => el.addEventListener('change', regen));
@@ -414,6 +480,7 @@ const ICON_CHECK = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" 
 // ============================================================
 
 (function setupPin() {
+    const s           = loadGenSettings();
     const lengthRange = document.getElementById('pin-length-range');
     const lengthNum   = document.getElementById('pin-length-num');
     const result      = document.getElementById('pin-result');
@@ -421,7 +488,12 @@ const ICON_CHECK = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" 
     const copyBtn     = document.getElementById('pin-copy');
     const regenBtn    = document.getElementById('pin-regen');
 
-    function regen() { result.value = generatePin(+lengthRange.value); }
+    if (s.pin_length !== undefined) { lengthRange.value = s.pin_length; lengthNum.value = s.pin_length; }
+
+    function regen() {
+        result.value = generatePin(+lengthRange.value);
+        saveGenSettings({ pin_length: +lengthRange.value });
+    }
 
     linkSlider(lengthRange, lengthNum, regen);
     setupReveal(result, showBtn);
@@ -429,6 +501,41 @@ const ICON_CHECK = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" 
     regenBtn.addEventListener('click', regen);
     regen();
 })();
+
+// ============================================================
+//  Copy-all modal
+// ============================================================
+
+function openCopyAll(passwords) {
+    const modal    = document.getElementById('copy-all-modal');
+    const textarea = document.getElementById('copy-all-text');
+    if (!modal || !textarea) return;
+    textarea.value = passwords.join('\n');
+    textarea.rows  = Math.min(passwords.length, 10);
+    modal.classList.remove('hidden');
+    errorBackdrop.classList.remove('hidden');
+}
+
+function closeCopyAll() {
+    const modal = document.getElementById('copy-all-modal');
+    if (!modal || modal.classList.contains('hidden')) return;
+    modal.classList.add('hidden');
+    errorBackdrop.classList.add('hidden');
+}
+
+document.getElementById('copy-all-close')?.addEventListener('click', closeCopyAll);
+errorBackdrop.addEventListener('click', closeCopyAll);
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeCopyAll(); });
+
+document.getElementById('copy-all-btn')?.addEventListener('click', () => {
+    const textarea = document.getElementById('copy-all-text');
+    const btn      = document.getElementById('copy-all-btn');
+    if (!textarea?.value) return;
+    navigator.clipboard.writeText(textarea.value).then(() => {
+        btn.textContent = t('btn_copy_done');
+        setTimeout(() => { btn.textContent = t('btn_copy'); }, 2000);
+    });
+});
 
 // ============================================================
 //  Generator — tabs

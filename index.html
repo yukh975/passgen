@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Passgen</title>
+    <title>Password Generator</title>
+    <link rel="icon" href="favicon.ico" sizes="48x48">
+    <link rel="icon" type="image/svg+xml" href="assets/logo.svg">
     <link rel="stylesheet" href="assets/style.css">
     <script src="assets/theme-init.js"></script>
 </head>
@@ -62,6 +64,7 @@
                             <label class="toggle-row"><input type="checkbox" id="pw-numbers" checked><span class="toggle-label" data-i18n="opt_numbers"></span></label>
                             <label class="toggle-row"><input type="checkbox" id="pw-symbols" checked><span class="toggle-label" data-i18n="opt_symbols"></span></label>
                             <label class="toggle-row"><input type="checkbox" id="pw-nosimilar"><span class="toggle-label" data-i18n="opt_nosimilar"></span></label>
+                            <label class="toggle-row"><input type="checkbox" id="pw-norepeat"><span class="toggle-label" data-i18n="opt_norepeat"></span></label>
                         </div>
                     </div>
 
@@ -113,7 +116,10 @@
                             <span class="strength-text" id="pw-strength-text"></span>
                         </div>
                         <div id="pw-result-list" class="pw-result-list"></div>
-                        <button type="button" id="pw-regen" class="result-action-btn pw-regen-btn" data-i18n="btn_regen"></button>
+                        <div class="pw-actions">
+                            <button type="button" id="pw-copy-all" class="result-action-btn secondary" data-i18n="btn_copy_all"></button>
+                            <button type="button" id="pw-regen" class="result-action-btn" data-i18n="btn_regen"></button>
+                        </div>
                     </div>
 
                 </div>
@@ -212,6 +218,18 @@
                 </div>
             </div>
             <div class="help-body" id="help-body" data-i18n-html="help_content"></div>
+        </div>
+
+        <!-- Copy-all modal -->
+        <div id="copy-all-modal" class="copy-all-modal hidden">
+            <div class="copy-all-header">
+                <span data-i18n="copy_all_title"></span>
+                <button type="button" id="copy-all-close" class="result-close">✕</button>
+            </div>
+            <div class="copy-all-body">
+                <textarea id="copy-all-text" class="copy-all-text" readonly></textarea>
+                <button type="button" id="copy-all-btn" class="result-action-btn" data-i18n="btn_copy"></button>
+            </div>
         </div>
 
         <footer class="copyright">

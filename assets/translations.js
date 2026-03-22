@@ -22,6 +22,7 @@ const TRANSLATIONS = {
         opt_numbers:     'Numbers (0–9)',
         opt_symbols:     'Symbols (!@#…)',
         opt_nosimilar:   'Exclude similar (I, l, 1, O, 0)',
+        opt_norepeat:    'No repeating characters',
         custom_symbols_label: 'Extra symbols',
         exclude_label:   'Exclude',
         preset_label:    'Preset',
@@ -55,6 +56,8 @@ const TRANSLATIONS = {
         btn_copy:        'Copy',
         btn_copy_done:   'Copied!',
         btn_regen:       'Regenerate',
+        btn_copy_all:    'Copy all',
+        copy_all_title:  'Generated passwords',
     },
     ru: {
         // ── Оболочка ─────────────────────────────────────────────
@@ -78,6 +81,7 @@ const TRANSLATIONS = {
         opt_numbers:     'Цифры (0–9)',
         opt_symbols:     'Символы (!@#…)',
         opt_nosimilar:   'Исключить похожие (I, l, 1, O, 0)',
+        opt_norepeat:    'Без повторяющихся символов',
         custom_symbols_label: 'Доп. символы',
         exclude_label:   'Исключить',
         preset_label:    'Пресет',
@@ -111,5 +115,7 @@ const TRANSLATIONS = {
         btn_copy:        'Копировать',
         btn_copy_done:   'Скопировано!',
         btn_regen:       'Пересоздать',
+        btn_copy_all:    'Скопировать все',
+        copy_all_title:  'Сгенерированные пароли',
     },
 };
