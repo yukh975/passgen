@@ -83,6 +83,9 @@ const TRANSLATIONS = {
         ssh_verify_pub_ph:   'ssh-ed25519 AAAA… or ssh-rsa AAAA…',
         ssh_passphrase_label: 'Passphrase (optional)',
         ssh_passphrase_ph:   'Leave empty for unencrypted key',
+        ssh_verify_pass_ph:  'Enter if key is passphrase-protected',
+        ssh_verify_needs_pass: 'This key is passphrase-protected. Enter the passphrase.',
+        ssh_verify_wrong_pass: 'Wrong passphrase',
 
         // ── GPG Key tab ──────────────────────────────────────
         tab_gpg:            'GPG Key',
@@ -176,6 +179,9 @@ const TRANSLATIONS = {
         ssh_verify_pub_ph:   'ssh-ed25519 AAAA… или ssh-rsa AAAA…',
         ssh_passphrase_label: 'Пароль ключа (необязательно)',
         ssh_passphrase_ph:   'Оставьте пустым для незащищённого ключа',
+        ssh_verify_pass_ph:  'Введите, если ключ защищён паролем',
+        ssh_verify_needs_pass: 'Ключ защищён паролем. Введите пароль.',
+        ssh_verify_wrong_pass: 'Неверный пароль',
 
         // ── Вкладка GPG-ключ ─────────────────────────────────
         tab_gpg:            'GPG-ключ',

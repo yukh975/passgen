@@ -1978,6 +1978,10 @@ pre#result-json {
     gap: 6px;
 }
 
+.ssh-verify-field--pass {
+    margin-top: 4px;
+}
+
 .ssh-verify-field-hdr {
     display: flex;
     align-items: center;

@@ -1090,7 +1090,7 @@ function downloadZip(zipName, files) {
 
 // ── SSH key pair verification ─────────────────────────────────
 
-function extractPubBlobFromPrivKey(pem) {
+async function extractPubBlobFromPrivKey(pem, passphrase) {
     // Strip PEM armor line by line (handles \r\n and \n)
     const b64 = pem.split(/\r?\n/)
         .filter(l => l && !l.startsWith('-----'))
@@ -1113,14 +1113,9 @@ function extractPubBlobFromPrivKey(pem) {
 
     function readUint32() {
         if (pos + 4 > buf.length) throw new Error('Not a valid OpenSSH private key');
-        const v = view.getUint32(pos, false); // big-endian
+        const v = view.getUint32(pos, false);
         pos += 4;
         return v;
-    }
-    function skipString() {
-        const len = readUint32();
-        if (pos + len > buf.length) throw new Error('Not a valid OpenSSH private key');
-        pos += len;
     }
     function readBytes() {
         const len = readUint32();
@@ -1129,16 +1124,59 @@ function extractPubBlobFromPrivKey(pem) {
         pos += len;
         return slice;
     }
+    function readString() {
+        return new TextDecoder().decode(readBytes());
+    }
 
-    skipString(); // ciphername
-    skipString(); // kdfname
-    skipString(); // kdfoptions
-    readUint32(); // numkeys
-    return readBytes(); // embedded public key blob
+    const ciphername    = readString();
+    const kdfname       = readString();
+    const kdfoptions    = readBytes();
+    readUint32();                       // numkeys
+    const pubBlob       = readBytes();  // plaintext public key
+    const privSection   = readBytes();  // plaintext or encrypted private section
+
+    if (ciphername === 'none') {
+        // Unencrypted: verify checkints as a sanity check
+        const dv = new DataView(privSection.buffer, privSection.byteOffset);
+        if (privSection.length >= 8 && dv.getUint32(0, false) !== dv.getUint32(4, false)) {
+            throw new Error('Corrupt key: checkint mismatch');
+        }
+        return pubBlob;
+    }
+
+    // Encrypted key
+    if (ciphername !== 'aes256-ctr' || kdfname !== 'bcrypt') {
+        throw new Error(`Unsupported encryption: ${ciphername}/${kdfname}`);
+    }
+    if (!passphrase) {
+        throw new Error(t('ssh_verify_needs_pass'));
+    }
+
+    // Parse kdfoptions: sshBytes(salt) + sshUint32(rounds)
+    const kv      = new DataView(kdfoptions.buffer, kdfoptions.byteOffset);
+    const saltLen = kv.getUint32(0, false);
+    const salt    = kdfoptions.slice(4, 4 + saltLen);
+    const rounds  = kv.getUint32(4 + saltLen, false);
+
+    const passBytes  = new TextEncoder().encode(passphrase);
+    const keyMat     = await bcryptPbkdf(passBytes, salt, rounds, 64);
+    const aesKeyData = keyMat.slice(0, 32);
+    const aesIV      = keyMat.slice(32, 48);
+
+    const aesKey  = await crypto.subtle.importKey('raw', aesKeyData, { name: 'AES-CTR' }, false, ['decrypt']);
+    const decBuf  = await crypto.subtle.decrypt({ name: 'AES-CTR', counter: aesIV, length: 64 }, aesKey, privSection);
+    const dec     = new Uint8Array(decBuf);
+    const dv2     = new DataView(dec.buffer, dec.byteOffset);
+
+    if (dec.length < 8 || dv2.getUint32(0, false) !== dv2.getUint32(4, false)) {
+        throw new Error(t('ssh_verify_wrong_pass'));
+    }
+
+    return pubBlob;
 }
 
-function verifySSHKeyPair(privPem, pubStr) {
-    const privPub = extractPubBlobFromPrivKey(privPem.trim());
+async function verifySSHKeyPair(privPem, pubStr, passphrase) {
+    const privPub = await extractPubBlobFromPrivKey(privPem.trim(), passphrase);
     const parts = pubStr.trim().split(/\s+/);
     if (parts.length < 2) throw new Error('Invalid public key format');
     let pubBlob;
@@ -1150,15 +1188,16 @@ function verifySSHKeyPair(privPem, pubStr) {
 }
 
 (function setupSSHVerify() {
-    const modal    = document.getElementById('ssh-verify-modal');
-    const openBtn  = document.getElementById('ssh-verify-open');
-    const closeBtn = document.getElementById('ssh-verify-close');
-    const privTA   = document.getElementById('ssh-verify-priv');
-    const pubTA    = document.getElementById('ssh-verify-pub');
-    const privFile = document.getElementById('ssh-verify-priv-file');
-    const pubFile  = document.getElementById('ssh-verify-pub-file');
-    const checkBtn = document.getElementById('ssh-verify-check');
-    const resultEl = document.getElementById('ssh-verify-result');
+    const modal      = document.getElementById('ssh-verify-modal');
+    const openBtn    = document.getElementById('ssh-verify-open');
+    const closeBtn   = document.getElementById('ssh-verify-close');
+    const privTA     = document.getElementById('ssh-verify-priv');
+    const pubTA      = document.getElementById('ssh-verify-pub');
+    const privFile   = document.getElementById('ssh-verify-priv-file');
+    const pubFile    = document.getElementById('ssh-verify-pub-file');
+    const passInput  = document.getElementById('ssh-verify-pass');
+    const checkBtn   = document.getElementById('ssh-verify-check');
+    const resultEl   = document.getElementById('ssh-verify-result');
 
     function openModal()  { modal.classList.remove('hidden'); errorBackdrop.classList.remove('hidden'); }
     function closeModal() { modal.classList.add('hidden');    errorBackdrop.classList.add('hidden'); }
@@ -1181,22 +1220,26 @@ function verifySSHKeyPair(privPem, pubStr) {
     loadFile(privFile, privTA);
     loadFile(pubFile, pubTA);
 
-    checkBtn.addEventListener('click', () => {
+    checkBtn.addEventListener('click', async () => {
         const priv = privTA.value.trim();
         const pub  = pubTA.value.trim();
+        const pass = passInput ? passInput.value : '';
         resultEl.className = 'ssh-verify-result';
         if (!priv || !pub) {
             resultEl.classList.add('warn');
             resultEl.textContent = t('ssh_verify_empty');
             return;
         }
+        checkBtn.disabled = true;
         try {
-            const ok = verifySSHKeyPair(priv, pub);
+            const ok = await verifySSHKeyPair(priv, pub, pass);
             resultEl.classList.add(ok ? 'match' : 'no-match');
             resultEl.textContent = t(ok ? 'ssh_verify_match' : 'ssh_verify_no_match');
         } catch (err) {
             resultEl.classList.add('no-match');
             resultEl.textContent = err.message;
+        } finally {
+            checkBtn.disabled = false;
         }
     });
 })();
