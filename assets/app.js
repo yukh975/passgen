@@ -100,12 +100,20 @@ function closeHelp() {
     errorBackdrop.classList.add('hidden');
 }
 
+const GEN_DEFAULTS = {
+    _v:           SETTINGS_VERSION,
+    active_tab:   'password',
+    pw_length:    20,  pw_count:    1,
+    pp_count:     8,   pp_qty:      1,  pp_separator: 'dash',
+    pin_length:   6,   pin_qty:     1,
+};
+
 document.getElementById('reset-btn').addEventListener('click', () => {
     if (confirm(t('reset_confirm'))) {
         localStorage.removeItem(LS_THEME);
         localStorage.removeItem(LS_LANG);
-        // Write a clean versioned object so migration won't restore stale values on reload
-        localStorage.setItem(LS_GEN, JSON.stringify({ _v: SETTINGS_VERSION }));
+        // Write explicit defaults so browser form-state restoration is overridden on reload
+        localStorage.setItem(LS_GEN, JSON.stringify(GEN_DEFAULTS));
         location.reload();
     }
 });
