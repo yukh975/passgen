@@ -46,6 +46,9 @@ function applyLang() {
     document.querySelectorAll('[data-i18n-title]').forEach(el => {
         el.title = t(el.dataset.i18nTitle);
     });
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+        el.placeholder = t(el.dataset.i18nPlaceholder);
+    });
     document.getElementById('lang-en').classList.toggle('active', currentLang === 'en');
     document.getElementById('lang-ru').classList.toggle('active', currentLang === 'ru');
     document.getElementById('help-lang-en').classList.toggle('active', currentLang === 'en');
@@ -299,8 +302,9 @@ function updateStrength(password, barEl, textEl) {
     textEl.style.color  = STRENGTH_COLORS[lvl] || 'var(--muted)';
 }
 
-const ICON_COPY = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
-const ICON_CHECK = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
+const ICON_COPY     = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
+const ICON_CHECK    = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
+const ICON_DOWNLOAD = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>`;
 
 // ============================================================
 //  Settings persistence
@@ -316,6 +320,7 @@ const GEN_DEFAULTS = {
     pw_length:    20,  pw_count:    1,
     pp_count:     8,   pp_qty:      1,  pp_separator: 'dash',
     pin_length:   6,   pin_qty:     1,
+    ssh_type:     'ed25519', ssh_bits: 4096,
 };
 
 document.getElementById('reset-btn')?.addEventListener('click', () => {
@@ -695,6 +700,549 @@ document.querySelectorAll('.gen-tab').forEach(tab => {
         saveGenSettings({ active_tab: tab.dataset.tab });
     });
 });
+
+// ============================================================
+//  Generator — SSH Key tab
+// ============================================================
+
+// ── Binary helpers (OpenSSH wire format) ─────────────────────
+
+function concatBytes(...arrays) {
+    const total = arrays.reduce((s, a) => s + a.length, 0);
+    const result = new Uint8Array(total);
+    let offset = 0;
+    for (const a of arrays) { result.set(a, offset); offset += a.length; }
+    return result;
+}
+
+function sshUint32(n) {
+    const buf = new Uint8Array(4);
+    new DataView(buf.buffer).setUint32(0, n, false);
+    return buf;
+}
+
+function sshString(str) {
+    const enc = new TextEncoder().encode(str);
+    return concatBytes(sshUint32(enc.length), enc);
+}
+
+function sshBytes(bytes) {
+    return concatBytes(sshUint32(bytes.length), bytes);
+}
+
+// mpint: big-endian arbitrary-precision integer with leading 0x00 if high bit set
+function sshMpint(bytes) {
+    let start = 0;
+    while (start < bytes.length - 1 && bytes[start] === 0) start++;
+    bytes = bytes.slice(start);
+    if (bytes[0] & 0x80) {
+        const padded = new Uint8Array(bytes.length + 1);
+        padded.set(bytes, 1);
+        bytes = padded;
+    }
+    return concatBytes(sshUint32(bytes.length), bytes);
+}
+
+function b64urlToBytes(b64url) {
+    const b64 = b64url.replace(/-/g, '+').replace(/_/g, '/');
+    const bin = atob(b64);
+    return Uint8Array.from(bin, c => c.charCodeAt(0));
+}
+
+function bytesToB64(bytes) {
+    let bin = '';
+    for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+    return btoa(bin);
+}
+
+function osshPadding(bytes) {
+    const rem = bytes.length % 8;
+    if (rem === 0) return bytes;
+    const pad = 8 - rem;
+    const result = new Uint8Array(bytes.length + pad);
+    result.set(bytes);
+    for (let i = 0; i < pad; i++) result[bytes.length + i] = i + 1;
+    return result;
+}
+
+function formatOsshPem(blob) {
+    const b64 = bytesToB64(blob);
+    const lines = b64.match(/.{1,70}/g).join('\n');
+    return `-----BEGIN OPENSSH PRIVATE KEY-----\n${lines}\n-----END OPENSSH PRIVATE KEY-----`;
+}
+
+function buildOsshBlob(pubBlob, privSection) {
+    const magic = new TextEncoder().encode('openssh-key-v1\0');
+    return concatBytes(
+        magic,
+        sshString('none'),         // ciphername
+        sshString('none'),         // kdfname
+        sshString(''),             // kdf options (empty string = \0\0\0\0)
+        sshUint32(1),              // num keys
+        sshBytes(pubBlob),         // public key
+        sshBytes(osshPadding(privSection)),
+    );
+}
+
+// Pad to 16-byte boundary (AES block size for encrypted keys)
+function osshPadding16(bytes) {
+    const rem = bytes.length % 16;
+    if (rem === 0) return bytes;
+    const pad = 16 - rem;
+    const result = new Uint8Array(bytes.length + pad);
+    result.set(bytes);
+    for (let i = 0; i < pad; i++) result[bytes.length + i] = i + 1;
+    return result;
+}
+
+async function buildOsshBlobEncrypted(pubBlob, privSection, passphrase) {
+    if (!passphrase) return buildOsshBlob(pubBlob, privSection);
+
+    const ROUNDS = 16;
+    const salt   = new Uint8Array(16);
+    crypto.getRandomValues(salt);
+
+    const passBytes  = new TextEncoder().encode(passphrase);
+    const keyMat     = await bcryptPbkdf(passBytes, salt, ROUNDS, 64);
+    const aesKeyData = keyMat.slice(0, 32);
+    const aesIV      = keyMat.slice(32, 48);
+
+    const padded = osshPadding16(privSection);
+
+    const aesKey   = await crypto.subtle.importKey('raw', aesKeyData, { name: 'AES-CTR' }, false, ['encrypt']);
+    const encBuf   = await crypto.subtle.encrypt({ name: 'AES-CTR', counter: aesIV, length: 64 }, aesKey, padded);
+    const encBytes = new Uint8Array(encBuf);
+
+    // kdfoptions: sshBytes(salt) + sshUint32(rounds)
+    const kdfOpts = concatBytes(sshBytes(salt), sshUint32(ROUNDS));
+
+    const magic = new TextEncoder().encode('openssh-key-v1\0');
+    return concatBytes(
+        magic,
+        sshString('aes256-ctr'),   // ciphername
+        sshString('bcrypt'),       // kdfname
+        sshBytes(kdfOpts),         // kdfoptions
+        sshUint32(1),              // num keys
+        sshBytes(pubBlob),         // public key
+        sshBytes(encBytes),        // encrypted private section (no outer padding; CTR is stream)
+    );
+}
+
+// ── Key generation ────────────────────────────────────────────
+
+async function generateEd25519Pair(passphrase) {
+    const kp = await crypto.subtle.generateKey({ name: 'Ed25519' }, true, ['sign', 'verify']);
+    const pubJwk  = await crypto.subtle.exportKey('jwk', kp.publicKey);
+    const privJwk = await crypto.subtle.exportKey('jwk', kp.privateKey);
+
+    const pubBytes  = b64urlToBytes(pubJwk.x);               // 32 bytes
+    const privBytes = concatBytes(b64urlToBytes(privJwk.d), pubBytes); // seed+pub = 64 bytes
+
+    const pubBlob = concatBytes(sshString('ssh-ed25519'), sshBytes(pubBytes));
+    const pubLine = `ssh-ed25519 ${bytesToB64(pubBlob)}`;
+
+    const checkInt = new Uint8Array(4);
+    crypto.getRandomValues(checkInt);
+
+    const privSection = concatBytes(
+        checkInt, checkInt,
+        sshString('ssh-ed25519'),
+        sshBytes(pubBytes),
+        sshBytes(privBytes),
+        sshString(''),
+    );
+
+    const blob = await buildOsshBlobEncrypted(pubBlob, privSection, passphrase);
+    return { privateKey: formatOsshPem(blob), publicKey: pubLine };
+}
+
+async function generateRSAPair(bits, passphrase) {
+    const kp = await crypto.subtle.generateKey(
+        { name: 'RSASSA-PKCS1-v1_5', modulusLength: bits, publicExponent: new Uint8Array([1, 0, 1]), hash: 'SHA-256' },
+        true, ['sign', 'verify'],
+    );
+    const jwk = await crypto.subtle.exportKey('jwk', kp.privateKey);
+
+    const n  = b64urlToBytes(jwk.n);
+    const e  = b64urlToBytes(jwk.e);
+    const d  = b64urlToBytes(jwk.d);
+    const p  = b64urlToBytes(jwk.p);
+    const q  = b64urlToBytes(jwk.q);
+    const qi = b64urlToBytes(jwk.qi); // q^-1 mod p (iqmp)
+
+    const pubBlob = concatBytes(sshString('ssh-rsa'), sshMpint(e), sshMpint(n));
+    const pubLine = `ssh-rsa ${bytesToB64(pubBlob)}`;
+
+    const checkInt = new Uint8Array(4);
+    crypto.getRandomValues(checkInt);
+
+    const privSection = concatBytes(
+        checkInt, checkInt,
+        sshString('ssh-rsa'),
+        sshMpint(n), sshMpint(e), sshMpint(d),
+        sshMpint(qi), sshMpint(p), sshMpint(q),
+        sshString(''),
+    );
+
+    const blob = await buildOsshBlobEncrypted(pubBlob, privSection, passphrase);
+    return { privateKey: formatOsshPem(blob), publicKey: pubLine };
+}
+
+// ── ZIP helper (no dependencies) ─────────────────────────────
+
+const _CRC32 = (() => {
+    const t = new Uint32Array(256);
+    for (let n = 0; n < 256; n++) {
+        let c = n;
+        for (let k = 0; k < 8; k++) c = (c & 1) ? (0xedb88320 ^ (c >>> 1)) : (c >>> 1);
+        t[n] = c;
+    }
+    return t;
+})();
+
+function crc32(bytes) {
+    let c = 0xffffffff;
+    for (let i = 0; i < bytes.length; i++) c = _CRC32[(c ^ bytes[i]) & 0xff] ^ (c >>> 8);
+    return (c ^ 0xffffffff) >>> 0;
+}
+
+// files: [{name: string, bytes: Uint8Array}]
+function makeZip(files) {
+    const enc = new TextEncoder();
+    const entries = [];
+    let dataOffset = 0;
+
+    for (const { name, bytes } of files) {
+        const nb  = enc.encode(name);
+        const crc = crc32(bytes);
+        const lh  = new Uint8Array(30 + nb.length);
+        const lv  = new DataView(lh.buffer);
+        lv.setUint32(0, 0x04034b50, true); lv.setUint16(4, 20, true);
+        lv.setUint32(14, crc, true);
+        lv.setUint32(18, bytes.length, true); lv.setUint32(22, bytes.length, true);
+        lv.setUint16(26, nb.length, true);
+        lh.set(nb, 30);
+        entries.push({ lh, bytes, crc, nb, lhOffset: dataOffset });
+        dataOffset += lh.length + bytes.length;
+    }
+
+    const cdStart = dataOffset;
+    const cdParts = entries.map(({ nb, crc, bytes, lhOffset }) => {
+        const cd = new Uint8Array(46 + nb.length);
+        const cv = new DataView(cd.buffer);
+        cv.setUint32(0, 0x02014b50, true); cv.setUint16(4, 20, true); cv.setUint16(6, 20, true);
+        cv.setUint32(16, crc, true);
+        cv.setUint32(20, bytes.length, true); cv.setUint32(24, bytes.length, true);
+        cv.setUint16(28, nb.length, true);
+        cv.setUint32(42, lhOffset, true);
+        cd.set(nb, 46);
+        return cd;
+    });
+
+    const cdSize = cdParts.reduce((s, a) => s + a.length, 0);
+    const eocd = new Uint8Array(22);
+    const ev = new DataView(eocd.buffer);
+    ev.setUint32(0, 0x06054b50, true);
+    ev.setUint16(8, entries.length, true); ev.setUint16(10, entries.length, true);
+    ev.setUint32(12, cdSize, true); ev.setUint32(16, cdStart, true);
+
+    const all = [];
+    for (const { lh, bytes } of entries) { all.push(lh); all.push(bytes); }
+    cdParts.forEach(cd => all.push(cd));
+    all.push(eocd);
+
+    const total = all.reduce((s, a) => s + a.length, 0);
+    const result = new Uint8Array(total);
+    let pos = 0;
+    for (const a of all) { result.set(a, pos); pos += a.length; }
+    return result;
+}
+
+function downloadZip(zipName, files) {
+    const blob = new Blob([makeZip(files)], { type: 'application/zip' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url; a.download = zipName; a.click();
+    URL.revokeObjectURL(url);
+}
+
+// ── SSH tab setup ─────────────────────────────────────────────
+
+(function setupSSH() {
+    const s           = loadGenSettings();
+    const typeSelect  = document.getElementById('ssh-type');
+    const bitsSelect  = document.getElementById('ssh-bits');
+    const bitsField   = document.getElementById('ssh-bits-field');
+    const resultEl    = document.getElementById('ssh-result');
+    const generateBtn = document.getElementById('ssh-generate');
+
+    if (s.ssh_type !== undefined) typeSelect.value = s.ssh_type;
+    if (s.ssh_bits !== undefined) bitsSelect.value = s.ssh_bits;
+
+    function updateBitsVisibility() {
+        bitsField.classList.toggle('hidden', typeSelect.value !== 'rsa');
+    }
+    typeSelect.addEventListener('change', updateBitsVisibility);
+    updateBitsVisibility();
+
+    const downloadBtn = document.getElementById('ssh-download');
+
+    function renderResult(pair, baseName) {
+        resultEl.innerHTML = '';
+        const enc = new TextEncoder();
+
+        [
+            { label: 'ssh_private_label', val: pair.privateKey },
+            { label: 'ssh_public_label',  val: pair.publicKey  },
+        ].forEach(({ label, val }) => {
+            const block = document.createElement('div');
+            block.className = 'ssh-key-block';
+
+            const header = document.createElement('div');
+            header.className = 'ssh-key-header';
+
+            const labelEl = document.createElement('span');
+            labelEl.className   = 'gen-label';
+            labelEl.textContent = t(label);
+
+            const copyBtn = document.createElement('button');
+            copyBtn.type      = 'button';
+            copyBtn.className = 'pw-copy-btn';
+            copyBtn.innerHTML = ICON_COPY;
+            copyBtn.title     = t('btn_copy');
+            copyBtn.addEventListener('click', () => {
+                navigator.clipboard.writeText(val).then(() => {
+                    copyBtn.innerHTML = ICON_CHECK;
+                    copyBtn.classList.add('copied');
+                    setTimeout(() => { copyBtn.innerHTML = ICON_COPY; copyBtn.classList.remove('copied'); }, 2000);
+                });
+            });
+
+            header.appendChild(labelEl);
+            header.appendChild(copyBtn);
+
+            const textarea = document.createElement('textarea');
+            textarea.className    = 'ssh-key-textarea';
+            textarea.readOnly     = true;
+            textarea.spellcheck   = false;
+            textarea.autocomplete = 'off';
+            textarea.value        = val;
+            // rows: fallback for browsers without field-sizing:content
+            // Add 1 so single-line content (public key) isn't truncated on line-wrap
+            textarea.rows         = val.split('\n').length + 1;
+
+            block.appendChild(header);
+            block.appendChild(textarea);
+            resultEl.appendChild(block);
+        });
+
+        // Refine heights via scrollHeight now that elements are in the DOM
+        requestAnimationFrame(() => {
+            resultEl.querySelectorAll('.ssh-key-textarea').forEach(ta => {
+                if (ta.scrollHeight > 0) {
+                    ta.style.height = 'auto';
+                    ta.style.height = Math.min(ta.scrollHeight, 380) + 'px';
+                }
+            });
+        });
+
+        // Wire up download button
+        downloadBtn.classList.remove('hidden');
+        downloadBtn.onclick = () => {
+            downloadZip(`${baseName}.zip`, [
+                { name: `${baseName}.key`, bytes: enc.encode(pair.privateKey) },
+                { name: `${baseName}.pub`, bytes: enc.encode(pair.publicKey)  },
+            ]);
+        };
+    }
+
+    function clearResult() {
+        resultEl.innerHTML = '';
+        downloadBtn.classList.add('hidden');
+        downloadBtn.onclick = null;
+    }
+
+    async function generate() {
+        generateBtn.disabled    = true;
+        generateBtn.textContent = t('ssh_generating');
+        try {
+            const type       = typeSelect.value;
+            const bits       = +bitsSelect.value;
+            const passphrase = document.getElementById('ssh-passphrase')?.value || '';
+            const pair       = type === 'ed25519' ? await generateEd25519Pair(passphrase) : await generateRSAPair(bits, passphrase);
+            const randBuf  = new Uint8Array(4);
+            crypto.getRandomValues(randBuf);
+            const baseName = Array.from(randBuf, b => b.toString(16).padStart(2, '0')).join('');
+            renderResult(pair, baseName);
+            saveGenSettings({ ssh_type: type, ssh_bits: bits });
+        } catch (err) {
+            showError(err.message || 'Key generation failed');
+        } finally {
+            generateBtn.disabled    = false;
+            generateBtn.textContent = t('btn_generate');
+        }
+    }
+
+    document.getElementById('ssh-clear').addEventListener('click', clearResult);
+    generateBtn.addEventListener('click', generate);
+    // No auto-generate on load: user explicitly clicks Generate
+})();
+
+// ── SSH key pair verification ─────────────────────────────────
+
+async function extractPubBlobFromPrivKey(pem, passphrase) {
+    // Strip PEM armor line by line (handles \r\n and \n)
+    const b64 = pem.split(/\r?\n/)
+        .filter(l => l && !l.startsWith('-----'))
+        .join('');
+    let buf;
+    try {
+        const bin = atob(b64);
+        buf = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
+    } catch { throw new Error('Invalid PEM encoding'); }
+
+    const MAGIC = 'openssh-key-v1\0';
+    if (buf.length < MAGIC.length) throw new Error('Not a valid OpenSSH private key');
+    for (let i = 0; i < MAGIC.length; i++) {
+        if (buf[i] !== MAGIC.charCodeAt(i)) throw new Error('Not a valid OpenSSH private key');
+    }
+
+    const view = new DataView(buf.buffer, buf.byteOffset, buf.byteLength);
+    let pos = MAGIC.length;
+
+    function readUint32() {
+        if (pos + 4 > buf.length) throw new Error('Not a valid OpenSSH private key');
+        const v = view.getUint32(pos, false);
+        pos += 4;
+        return v;
+    }
+    function readBytes() {
+        const len = readUint32();
+        if (pos + len > buf.length) throw new Error('Not a valid OpenSSH private key');
+        const slice = buf.slice(pos, pos + len);
+        pos += len;
+        return slice;
+    }
+    function readString() {
+        return new TextDecoder().decode(readBytes());
+    }
+
+    const ciphername    = readString();
+    const kdfname       = readString();
+    const kdfoptions    = readBytes();
+    readUint32();                       // numkeys
+    const pubBlob       = readBytes();  // plaintext public key
+    const privSection   = readBytes();  // plaintext or encrypted private section
+
+    if (ciphername === 'none') {
+        // Unencrypted: verify checkints as a sanity check
+        const dv = new DataView(privSection.buffer, privSection.byteOffset);
+        if (privSection.length >= 8 && dv.getUint32(0, false) !== dv.getUint32(4, false)) {
+            throw new Error('Corrupt key: checkint mismatch');
+        }
+        return pubBlob;
+    }
+
+    // Encrypted key
+    if (ciphername !== 'aes256-ctr' || kdfname !== 'bcrypt') {
+        throw new Error(`Unsupported encryption: ${ciphername}/${kdfname}`);
+    }
+    if (!passphrase) {
+        throw new Error(t('ssh_verify_needs_pass'));
+    }
+
+    // Parse kdfoptions: sshBytes(salt) + sshUint32(rounds)
+    const kv      = new DataView(kdfoptions.buffer, kdfoptions.byteOffset);
+    const saltLen = kv.getUint32(0, false);
+    const salt    = kdfoptions.slice(4, 4 + saltLen);
+    const rounds  = kv.getUint32(4 + saltLen, false);
+
+    const passBytes  = new TextEncoder().encode(passphrase);
+    const keyMat     = await bcryptPbkdf(passBytes, salt, rounds, 64);
+    const aesKeyData = keyMat.slice(0, 32);
+    const aesIV      = keyMat.slice(32, 48);
+
+    const aesKey  = await crypto.subtle.importKey('raw', aesKeyData, { name: 'AES-CTR' }, false, ['decrypt']);
+    const decBuf  = await crypto.subtle.decrypt({ name: 'AES-CTR', counter: aesIV, length: 64 }, aesKey, privSection);
+    const dec     = new Uint8Array(decBuf);
+    const dv2     = new DataView(dec.buffer, dec.byteOffset);
+
+    if (dec.length < 8 || dv2.getUint32(0, false) !== dv2.getUint32(4, false)) {
+        throw new Error(t('ssh_verify_wrong_pass'));
+    }
+
+    return pubBlob;
+}
+
+async function verifySSHKeyPair(privPem, pubStr, passphrase) {
+    const privPub = await extractPubBlobFromPrivKey(privPem.trim(), passphrase);
+    const parts = pubStr.trim().split(/\s+/);
+    if (parts.length < 2) throw new Error('Invalid public key format');
+    let pubBlob;
+    try { const bin = atob(parts[1]); pubBlob = Uint8Array.from(bin, c => c.charCodeAt(0)); }
+    catch { throw new Error('Invalid public key base64'); }
+    if (privPub.length !== pubBlob.length) return false;
+    for (let i = 0; i < privPub.length; i++) if (privPub[i] !== pubBlob[i]) return false;
+    return true;
+}
+
+(function setupSSHVerify() {
+    const modal      = document.getElementById('ssh-verify-modal');
+    const openBtn    = document.getElementById('ssh-verify-open');
+    const closeBtn   = document.getElementById('ssh-verify-close');
+    const privTA     = document.getElementById('ssh-verify-priv');
+    const pubTA      = document.getElementById('ssh-verify-pub');
+    const privFile   = document.getElementById('ssh-verify-priv-file');
+    const pubFile    = document.getElementById('ssh-verify-pub-file');
+    const passInput  = document.getElementById('ssh-verify-pass');
+    const checkBtn   = document.getElementById('ssh-verify-check');
+    const resultEl   = document.getElementById('ssh-verify-result');
+
+    function openModal()  { modal.classList.remove('hidden'); errorBackdrop.classList.remove('hidden'); }
+    function closeModal() { modal.classList.add('hidden');    errorBackdrop.classList.add('hidden'); }
+
+    openBtn.addEventListener('click', openModal);
+    closeBtn.addEventListener('click', closeModal);
+    errorBackdrop.addEventListener('click', closeModal);
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+    function loadFile(input, ta) {
+        input.addEventListener('change', () => {
+            const file = input.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = e => { ta.value = e.target.result.trim(); };
+            reader.readAsText(file);
+            input.value = '';
+        });
+    }
+    loadFile(privFile, privTA);
+    loadFile(pubFile, pubTA);
+
+    checkBtn.addEventListener('click', async () => {
+        const priv = privTA.value.trim();
+        const pub  = pubTA.value.trim();
+        const pass = passInput ? passInput.value : '';
+        resultEl.className = 'ssh-verify-result';
+        if (!priv || !pub) {
+            resultEl.classList.add('warn');
+            resultEl.textContent = t('ssh_verify_empty');
+            return;
+        }
+        checkBtn.disabled = true;
+        try {
+            const ok = await verifySSHKeyPair(priv, pub, pass);
+            resultEl.classList.add(ok ? 'match' : 'no-match');
+            resultEl.textContent = t(ok ? 'ssh_verify_match' : 'ssh_verify_no_match');
+        } catch (err) {
+            resultEl.classList.add('no-match');
+            resultEl.textContent = err.message;
+        } finally {
+            checkBtn.disabled = false;
+        }
+    });
+})();
 
 // ============================================================
 //  App logic — add your code below
