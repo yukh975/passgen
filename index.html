@@ -233,9 +233,10 @@
 
                     <div class="result-area">
                         <div id="ssh-result" class="ssh-result"></div>
-                        <div class="pw-actions">
-                            <button type="button" id="ssh-clear" class="result-action-btn secondary" data-i18n="btn_clear"></button>
-                            <button type="button" id="ssh-generate" class="result-action-btn" data-i18n="btn_generate"></button>
+                        <div class="pw-actions ssh-actions">
+                            <button type="button" id="ssh-generate"    class="ssh-btn"           data-i18n="btn_generate"></button>
+                            <button type="button" id="ssh-verify-open" class="ssh-btn"           data-i18n="btn_verify_key"></button>
+                            <button type="button" id="ssh-clear"       class="ssh-btn ssh-btn--muted" data-i18n="btn_clear"></button>
                         </div>
                     </div>
 
@@ -265,6 +266,40 @@
                 </div>
             </div>
             <div class="help-body" id="help-body" data-i18n-html="help_content"></div>
+        </div>
+
+        <!-- Verify SSH Key Pair modal -->
+        <div id="ssh-verify-modal" class="ssh-verify-modal hidden">
+            <div class="ssh-verify-hdr">
+                <span data-i18n="ssh_verify_title"></span>
+                <button type="button" id="ssh-verify-close" class="result-close">✕</button>
+            </div>
+            <div class="ssh-verify-body">
+                <div class="ssh-verify-field">
+                    <div class="ssh-verify-field-hdr">
+                        <span class="gen-label" data-i18n="ssh_private_label"></span>
+                        <label class="ssh-upload-btn">
+                            <input type="file" id="ssh-verify-priv-file" style="display:none" accept=".key,.pem,.txt,text/plain">
+                            <span data-i18n="btn_upload_file"></span>
+                        </label>
+                    </div>
+                    <textarea id="ssh-verify-priv" class="ssh-key-textarea" rows="6" spellcheck="false" data-i18n-placeholder="ssh_verify_priv_ph"></textarea>
+                </div>
+                <div class="ssh-verify-field">
+                    <div class="ssh-verify-field-hdr">
+                        <span class="gen-label" data-i18n="ssh_public_label"></span>
+                        <label class="ssh-upload-btn">
+                            <input type="file" id="ssh-verify-pub-file" style="display:none" accept=".pub,.txt,text/plain">
+                            <span data-i18n="btn_upload_file"></span>
+                        </label>
+                    </div>
+                    <textarea id="ssh-verify-pub" class="ssh-key-textarea" rows="3" spellcheck="false" data-i18n-placeholder="ssh_verify_pub_ph"></textarea>
+                </div>
+                <div id="ssh-verify-result" class="ssh-verify-result hidden"></div>
+                <div class="pw-actions">
+                    <button type="button" id="ssh-verify-check" class="result-action-btn" data-i18n="btn_verify"></button>
+                </div>
+            </div>
         </div>
 
         <!-- Copy-all modal -->

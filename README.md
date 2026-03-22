@@ -9,7 +9,7 @@
 [![JavaScript](https://img.shields.io/badge/JavaScript-ES2020-f7df1e?logo=javascript&logoColor=black)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE.md)
 
-**A lightweight, fully client-side password generator with three modes: Password, Passphrase, and PIN. All generation happens in the browser using the Web Crypto API — nothing is sent to any server.**
+**A lightweight, fully client-side password and SSH key generator. Supports Password, Passphrase, PIN, and SSH Key modes. All generation happens in the browser using the Web Crypto API — nothing is sent to any server.**
 
 ---
 
@@ -40,6 +40,13 @@ Current version is available at **https://yukh.net/passgen/**
 
 ### PIN
 - Numeric code, configurable length (4–12 digits, default 6)
+
+### SSH Key
+- Generate **ED25519** or **RSA** key pairs (2048 / 3072 / 4096 bits) directly in the browser
+- Keys exported in standard OpenSSH format — compatible with `ssh-keygen` output
+- Per-key copy button; **Download archive** saves both keys as a single ZIP file (`<name>.key` + `<name>.pub`)
+- **Verify keys** modal: paste or upload a private and public key to check they form a valid pair — supports file upload (`.key`, `.pub`, `.pem`)
+- ZIP created in pure JS with no external libraries (CRC-32 + uncompressed ZIP format)
 
 ### General
 - Generate 1–50 results at once on all three tabs
