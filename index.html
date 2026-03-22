@@ -34,7 +34,158 @@
              ===================================================== -->
 
         <main id="app-content">
-            <!-- TODO: add your UI here -->
+            <div class="gen-card">
+
+                <!-- Tabs -->
+                <div class="gen-tabs">
+                    <button type="button" class="gen-tab active" data-tab="password" data-i18n="tab_password"></button>
+                    <button type="button" class="gen-tab" data-tab="passphrase" data-i18n="tab_passphrase"></button>
+                    <button type="button" class="gen-tab" data-tab="pin" data-i18n="tab_pin"></button>
+                </div>
+
+                <!-- ── Password ──────────────────────────────────────── -->
+                <div id="panel-password" class="gen-panel">
+
+                    <div class="gen-row">
+                        <label class="gen-label" data-i18n="length_label"></label>
+                        <div class="slider-row">
+                            <input type="range" id="pw-length-range" min="4" max="64" value="16" class="slider-input">
+                            <input type="number" id="pw-length-num" min="4" max="64" value="16" class="num-input">
+                        </div>
+                    </div>
+
+                    <div class="gen-row">
+                        <label class="gen-label" data-i18n="options_label"></label>
+                        <div class="opts-grid">
+                            <label class="toggle-row"><input type="checkbox" id="pw-upper" checked><span class="toggle-label" data-i18n="opt_uppercase"></span></label>
+                            <label class="toggle-row"><input type="checkbox" id="pw-lower" checked><span class="toggle-label" data-i18n="opt_lowercase"></span></label>
+                            <label class="toggle-row"><input type="checkbox" id="pw-numbers" checked><span class="toggle-label" data-i18n="opt_numbers"></span></label>
+                            <label class="toggle-row"><input type="checkbox" id="pw-symbols" checked><span class="toggle-label" data-i18n="opt_symbols"></span></label>
+                            <label class="toggle-row"><input type="checkbox" id="pw-nosimilar"><span class="toggle-label" data-i18n="opt_nosimilar"></span></label>
+                        </div>
+                    </div>
+
+                    <div class="gen-row-split">
+                        <div class="gen-field">
+                            <label class="gen-label" data-i18n="custom_symbols_label"></label>
+                            <input type="text" id="pw-custom" placeholder="@#$">
+                        </div>
+                        <div class="gen-field">
+                            <label class="gen-label" data-i18n="exclude_label"></label>
+                            <input type="text" id="pw-exclude" placeholder="&apos;&quot;;&lt;&gt;">
+                        </div>
+                    </div>
+
+                    <div class="gen-row">
+                        <label class="gen-label" data-i18n="preset_label"></label>
+                        <select id="pw-preset">
+                            <option value="" data-i18n="preset_none"></option>
+                            <option value="postgresql">PostgreSQL</option>
+                            <option value="mysql">MySQL</option>
+                            <option value="sqlserver">SQL Server</option>
+                            <option value="linux">Linux User</option>
+                            <option value="windows">Windows Admin</option>
+                            <option value="redis">Redis</option>
+                            <option value="rabbitmq">RabbitMQ</option>
+                            <option value="highentropy" data-i18n="preset_high_entropy"></option>
+                        </select>
+                    </div>
+
+                    <div class="result-area">
+                        <div class="strength-row">
+                            <span class="strength-label" data-i18n="strength_label"></span>
+                            <div class="strength-bar" id="pw-strength-bar">
+                                <div class="strength-seg" data-n="1"></div>
+                                <div class="strength-seg" data-n="2"></div>
+                                <div class="strength-seg" data-n="3"></div>
+                                <div class="strength-seg" data-n="4"></div>
+                                <div class="strength-seg" data-n="5"></div>
+                            </div>
+                            <span class="strength-text" id="pw-strength-text"></span>
+                        </div>
+                        <div class="result-row">
+                            <div class="input-reveal">
+                                <input type="password" id="pw-result" class="result-input" readonly>
+                                <button type="button" id="pw-show" class="reveal-btn"></button>
+                            </div>
+                            <button type="button" id="pw-copy" class="result-action-btn" data-i18n="btn_copy"></button>
+                            <button type="button" id="pw-regen" class="result-action-btn secondary" data-i18n="btn_regen"></button>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- ── Passphrase ──────────────────────────────────── -->
+                <div id="panel-passphrase" class="gen-panel hidden">
+
+                    <div class="gen-row">
+                        <label class="gen-label" data-i18n="word_count_label"></label>
+                        <div class="slider-row">
+                            <input type="range" id="pp-count-range" min="2" max="10" value="4" class="slider-input">
+                            <input type="number" id="pp-count-num" min="2" max="10" value="4" class="num-input">
+                        </div>
+                    </div>
+
+                    <div class="gen-row">
+                        <label class="gen-label" data-i18n="options_label"></label>
+                        <div class="opts-grid">
+                            <label class="toggle-row"><input type="checkbox" id="pp-capitalize"><span class="toggle-label" data-i18n="opt_capitalize"></span></label>
+                            <label class="toggle-row"><input type="checkbox" id="pp-random-cap"><span class="toggle-label" data-i18n="opt_random_cap"></span></label>
+                            <label class="toggle-row"><input type="checkbox" id="pp-num-start"><span class="toggle-label" data-i18n="opt_num_start"></span></label>
+                            <label class="toggle-row"><input type="checkbox" id="pp-num-end"><span class="toggle-label" data-i18n="opt_num_end"></span></label>
+                        </div>
+                    </div>
+
+                    <div class="gen-row">
+                        <label class="gen-label" data-i18n="separator_label"></label>
+                        <select id="pp-separator">
+                            <option value="space" data-i18n="sep_space"></option>
+                            <option value="dash" data-i18n="sep_dash"></option>
+                            <option value="dot" data-i18n="sep_dot"></option>
+                            <option value="underscore" data-i18n="sep_underscore"></option>
+                            <option value="random" data-i18n="sep_random"></option>
+                            <option value="none" data-i18n="sep_none"></option>
+                        </select>
+                    </div>
+
+                    <div class="result-area">
+                        <div class="result-row">
+                            <div class="input-reveal">
+                                <input type="password" id="pp-result" class="result-input" readonly>
+                                <button type="button" id="pp-show" class="reveal-btn"></button>
+                            </div>
+                            <button type="button" id="pp-copy" class="result-action-btn" data-i18n="btn_copy"></button>
+                            <button type="button" id="pp-regen" class="result-action-btn secondary" data-i18n="btn_regen"></button>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- ── PIN ────────────────────────────────────────── -->
+                <div id="panel-pin" class="gen-panel hidden">
+
+                    <div class="gen-row">
+                        <label class="gen-label" data-i18n="length_label"></label>
+                        <div class="slider-row">
+                            <input type="range" id="pin-length-range" min="4" max="12" value="6" class="slider-input">
+                            <input type="number" id="pin-length-num" min="4" max="12" value="6" class="num-input">
+                        </div>
+                    </div>
+
+                    <div class="result-area">
+                        <div class="result-row">
+                            <div class="input-reveal">
+                                <input type="password" id="pin-result" class="result-input" readonly>
+                                <button type="button" id="pin-show" class="reveal-btn"></button>
+                            </div>
+                            <button type="button" id="pin-copy" class="result-action-btn" data-i18n="btn_copy"></button>
+                            <button type="button" id="pin-regen" class="result-action-btn secondary" data-i18n="btn_regen"></button>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
         </main>
 
         <!-- Error toast -->
@@ -67,6 +218,7 @@
 
     </div>
 
+    <script src="assets/wordlist.js"></script>
     <script src="assets/translations.js"></script>
     <script src="assets/app.js"></script>
 </body>
