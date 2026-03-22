@@ -368,9 +368,9 @@ let lastPasswords = [];
     const barEl       = document.getElementById('pw-strength-bar');
     const textEl      = document.getElementById('pw-strength-text');
 
-    // Restore saved settings (read back from range to get browser-clamped value)
-    if (s.pw_length !== undefined) { lengthRange.value = s.pw_length; lengthNum.value = lengthRange.value; }
-    if (s.pw_count  !== undefined) { countRange.value  = s.pw_count;  countNum.value  = countRange.value; }
+    // Restore saved settings
+    if (s.pw_length    !== undefined) lengthRange.value = s.pw_length;
+    if (s.pw_count     !== undefined) countRange.value  = s.pw_count;
     if (s.pw_upper     !== undefined) upper.checked     = s.pw_upper;
     if (s.pw_lower     !== undefined) lower.checked     = s.pw_lower;
     if (s.pw_numbers   !== undefined) numbers.checked   = s.pw_numbers;
@@ -379,6 +379,9 @@ let lastPasswords = [];
     if (s.pw_norepeat  !== undefined) norepeat.checked  = s.pw_norepeat;
     if (s.pw_custom    !== undefined) custom.value      = s.pw_custom;
     if (s.pw_exclude   !== undefined) exclude.value     = s.pw_exclude;
+    // Always sync num fields from range (overrides browser form-state restoration)
+    lengthNum.value = lengthRange.value;
+    countNum.value  = countRange.value;
 
     function getOpts() {
         return {
@@ -475,14 +478,16 @@ let lastPasswords = [];
     const copyAllBtn = document.getElementById('pp-copy-all');
     const regenBtn   = document.getElementById('pp-regen');
 
-    if (s.pp_count !== undefined) { countRange.value = s.pp_count; countNum.value = countRange.value; }
-    if (s.pp_qty   !== undefined) { qtyRange.value   = s.pp_qty;   qtyNum.value   = qtyRange.value; }
+    if (s.pp_count      !== undefined) countRange.value  = s.pp_count;
+    if (s.pp_qty        !== undefined) qtyRange.value    = s.pp_qty;
     if (s.pp_capitalize !== undefined) capitalize.checked = s.pp_capitalize;
     if (s.pp_random_cap !== undefined) randomCap.checked  = s.pp_random_cap;
     if (s.pp_num_start  !== undefined) numStart.checked   = s.pp_num_start;
     if (s.pp_num_end    !== undefined) numEnd.checked     = s.pp_num_end;
     if (s.pp_num_inner  !== undefined) numInner.checked   = s.pp_num_inner;
     if (s.pp_separator  !== undefined) separator.value    = s.pp_separator;
+    countNum.value = countRange.value;
+    qtyNum.value   = qtyRange.value;
 
     function getOpts() {
         return {
@@ -564,8 +569,10 @@ let lastPasswords = [];
     const copyAllBtn  = document.getElementById('pin-copy-all');
     const regenBtn    = document.getElementById('pin-regen');
 
-    if (s.pin_length !== undefined) { lengthRange.value = s.pin_length; lengthNum.value = lengthRange.value; }
-    if (s.pin_qty    !== undefined) { qtyRange.value    = s.pin_qty;    qtyNum.value    = qtyRange.value; }
+    if (s.pin_length !== undefined) lengthRange.value = s.pin_length;
+    if (s.pin_qty    !== undefined) qtyRange.value    = s.pin_qty;
+    lengthNum.value = lengthRange.value;
+    qtyNum.value    = qtyRange.value;
 
     let lastPins = [];
 
