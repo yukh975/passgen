@@ -1872,6 +1872,9 @@ pre#result-json {
     padding: 10px 12px;
     resize: vertical;
     outline: none;
+    field-sizing: content;
+    max-height: 380px;
+    overflow-y: auto;
 }
 
 .ssh-key-textarea:focus {

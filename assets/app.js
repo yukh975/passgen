@@ -981,12 +981,23 @@ function downloadZip(zipName, files) {
             textarea.spellcheck   = false;
             textarea.autocomplete = 'off';
             textarea.value        = val;
-            // rows works regardless of tab visibility (unlike scrollHeight)
-            textarea.rows         = val.split('\n').length;
+            // rows: fallback for browsers without field-sizing:content
+            // Add 1 so single-line content (public key) isn't truncated on line-wrap
+            textarea.rows         = val.split('\n').length + 1;
 
             block.appendChild(header);
             block.appendChild(textarea);
             resultEl.appendChild(block);
+        });
+
+        // Refine heights via scrollHeight now that elements are in the DOM
+        requestAnimationFrame(() => {
+            resultEl.querySelectorAll('.ssh-key-textarea').forEach(ta => {
+                if (ta.scrollHeight > 0) {
+                    ta.style.height = 'auto';
+                    ta.style.height = Math.min(ta.scrollHeight, 380) + 'px';
+                }
+            });
         });
 
         // Wire up download button
