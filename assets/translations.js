@@ -25,8 +25,9 @@ const TRANSLATIONS = {
         custom_symbols_label: 'Extra symbols',
         exclude_label:   'Exclude',
         preset_label:    'Preset',
-        preset_none:     '— Custom',
+        preset_none:     '— No preset',
         preset_high_entropy: 'High Entropy',
+        count_label:     'Count',
 
         // ── Generator — strength ────────────────────────────────
         strength_label:  'Strength',
@@ -80,8 +81,9 @@ const TRANSLATIONS = {
         custom_symbols_label: 'Доп. символы',
         exclude_label:   'Исключить',
         preset_label:    'Пресет',
-        preset_none:     '— Своё',
+        preset_none:     '— Без пресета',
         preset_high_entropy: 'Макс. энтропия',
+        count_label:     'Количество',
 
         // ── Генератор — надёжность ───────────────────────────────
         strength_label:  'Надёжность',

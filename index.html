@@ -76,19 +76,28 @@
                         </div>
                     </div>
 
-                    <div class="gen-row">
-                        <label class="gen-label" data-i18n="preset_label"></label>
-                        <select id="pw-preset">
-                            <option value="" data-i18n="preset_none"></option>
-                            <option value="postgresql">PostgreSQL</option>
-                            <option value="mysql">MySQL</option>
-                            <option value="sqlserver">SQL Server</option>
-                            <option value="linux">Linux User</option>
-                            <option value="windows">Windows Admin</option>
-                            <option value="redis">Redis</option>
-                            <option value="rabbitmq">RabbitMQ</option>
-                            <option value="highentropy" data-i18n="preset_high_entropy"></option>
-                        </select>
+                    <div class="gen-row-split">
+                        <div class="gen-field">
+                            <label class="gen-label" data-i18n="preset_label"></label>
+                            <select id="pw-preset">
+                                <option value="" data-i18n="preset_none"></option>
+                                <option value="postgresql">PostgreSQL</option>
+                                <option value="mysql">MySQL</option>
+                                <option value="sqlserver">SQL Server</option>
+                                <option value="linux">Linux User</option>
+                                <option value="windows">Windows Admin</option>
+                                <option value="redis">Redis</option>
+                                <option value="rabbitmq">RabbitMQ</option>
+                                <option value="highentropy" data-i18n="preset_high_entropy"></option>
+                            </select>
+                        </div>
+                        <div class="gen-field">
+                            <label class="gen-label" data-i18n="count_label"></label>
+                            <div class="slider-row">
+                                <input type="range" id="pw-count-range" min="1" max="20" value="1" class="slider-input">
+                                <input type="number" id="pw-count-num" min="1" max="20" value="1" class="num-input">
+                            </div>
+                        </div>
                     </div>
 
                     <div class="result-area">
@@ -103,14 +112,8 @@
                             </div>
                             <span class="strength-text" id="pw-strength-text"></span>
                         </div>
-                        <div class="result-row">
-                            <div class="input-reveal">
-                                <input type="password" id="pw-result" class="result-input" readonly>
-                                <button type="button" id="pw-show" class="reveal-btn"></button>
-                            </div>
-                            <button type="button" id="pw-copy" class="result-action-btn" data-i18n="btn_copy"></button>
-                            <button type="button" id="pw-regen" class="result-action-btn secondary" data-i18n="btn_regen"></button>
-                        </div>
+                        <div id="pw-result-list" class="pw-result-list"></div>
+                        <button type="button" id="pw-regen" class="result-action-btn pw-regen-btn" data-i18n="btn_regen"></button>
                     </div>
 
                 </div>

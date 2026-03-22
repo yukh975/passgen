@@ -1773,3 +1773,50 @@ pre#result-json {
     background: var(--btn-secondary-hover);
     color: var(--text);
 }
+
+/* Password result list */
+
+.pw-regen-btn {
+    width: 100%;
+}
+
+.pw-result-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.pw-result-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.pw-result-row .result-input {
+    flex: 1;
+    min-width: 0;
+}
+
+.pw-copy-btn {
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    background: var(--border);
+    color: var(--muted);
+    border: none;
+    border-radius: 7px;
+    transition: background 0.15s, color 0.15s;
+}
+
+.pw-copy-btn:hover {
+    background: var(--btn-secondary-hover);
+    color: var(--text);
+}
+
+.pw-copy-btn.copied {
+    color: var(--success);
+}

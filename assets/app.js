@@ -278,6 +278,9 @@ function updateStrength(password, barEl, textEl) {
     textEl.style.color  = STRENGTH_COLORS[lvl] || 'var(--muted)';
 }
 
+const ICON_COPY = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
+const ICON_CHECK = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
+
 // ============================================================
 //  Generator — Password tab
 // ============================================================
@@ -285,6 +288,8 @@ function updateStrength(password, barEl, textEl) {
 (function setupPassword() {
     const lengthRange = document.getElementById('pw-length-range');
     const lengthNum   = document.getElementById('pw-length-num');
+    const countRange  = document.getElementById('pw-count-range');
+    const countNum    = document.getElementById('pw-count-num');
     const upper       = document.getElementById('pw-upper');
     const lower       = document.getElementById('pw-lower');
     const numbers     = document.getElementById('pw-numbers');
@@ -293,9 +298,7 @@ function updateStrength(password, barEl, textEl) {
     const custom      = document.getElementById('pw-custom');
     const exclude     = document.getElementById('pw-exclude');
     const preset      = document.getElementById('pw-preset');
-    const result      = document.getElementById('pw-result');
-    const showBtn     = document.getElementById('pw-show');
-    const copyBtn     = document.getElementById('pw-copy');
+    const resultList  = document.getElementById('pw-result-list');
     const regenBtn    = document.getElementById('pw-regen');
     const barEl       = document.getElementById('pw-strength-bar');
     const textEl      = document.getElementById('pw-strength-text');
@@ -309,12 +312,44 @@ function updateStrength(password, barEl, textEl) {
     }
 
     function regen() {
-        const pw = generatePassword(getOpts());
-        result.value = pw;
-        updateStrength(pw, barEl, textEl);
+        const count = +countRange.value;
+        const opts  = getOpts();
+        const passwords = Array.from({ length: count }, () => generatePassword(opts));
+
+        updateStrength(passwords[0] || '', barEl, textEl);
+
+        resultList.innerHTML = '';
+        passwords.forEach(pw => {
+            const row = document.createElement('div');
+            row.className = 'pw-result-row';
+
+            const input = document.createElement('input');
+            input.type     = 'text';
+            input.className = 'result-input';
+            input.readOnly = true;
+            input.value    = pw;
+
+            const btn = document.createElement('button');
+            btn.type      = 'button';
+            btn.className = 'pw-copy-btn';
+            btn.innerHTML = ICON_COPY;
+            btn.title     = t('btn_copy');
+            btn.addEventListener('click', () => {
+                navigator.clipboard.writeText(pw).then(() => {
+                    btn.innerHTML = ICON_CHECK;
+                    btn.classList.add('copied');
+                    setTimeout(() => { btn.innerHTML = ICON_COPY; btn.classList.remove('copied'); }, 2000);
+                });
+            });
+
+            row.appendChild(input);
+            row.appendChild(btn);
+            resultList.appendChild(row);
+        });
     }
 
     linkSlider(lengthRange, lengthNum, regen);
+    linkSlider(countRange, countNum, regen);
     [upper, lower, numbers, symbols, nosimilar].forEach(el => el.addEventListener('change', regen));
     [custom, exclude].forEach(el => el.addEventListener('input', regen));
 
@@ -330,8 +365,6 @@ function updateStrength(password, barEl, textEl) {
         regen();
     });
 
-    setupReveal(result, showBtn);
-    setupCopy(copyBtn, () => result.value);
     regenBtn.addEventListener('click', regen);
     regen();
 })();
