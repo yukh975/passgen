@@ -7,7 +7,6 @@
 # Secure Password Generator v1.0.0
 
 [![JavaScript](https://img.shields.io/badge/JavaScript-ES2020-f7df1e?logo=javascript&logoColor=black)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
-[![No dependencies](https://img.shields.io/badge/dependencies-none-lightgrey)](https://github.com/yukh975/passgen)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE.md)
 
 **A lightweight, fully client-side password generator with three modes: Password, Passphrase, and PIN. All generation happens in the browser using the Web Crypto API — nothing is sent to any server.**

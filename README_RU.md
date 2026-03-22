@@ -7,7 +7,6 @@
 # Secure Password Generator v1.0.0
 
 [![JavaScript](https://img.shields.io/badge/JavaScript-ES2020-f7df1e?logo=javascript&logoColor=black)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
-[![No dependencies](https://img.shields.io/badge/dependencies-none-lightgrey)](https://github.com/yukh975/passgen)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE.md)
 
 **Лёгкий полностью клиентский генератор паролей с тремя режимами: Пароль, Фраза-пароль и PIN. Вся генерация происходит в браузере через Web Crypto API — никакие данные не передаются на сервер.**
