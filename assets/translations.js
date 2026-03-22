@@ -2,7 +2,7 @@
 const TRANSLATIONS = {
     en: {
         // ── App chrome ──────────────────────────────────────────
-        app_title:       'Passgen',
+        app_title:       'Password Generator',
         subtitle:        'Secure Passwords Generator',
         help_title:      'Help',
         help_content:    '<h3>Password</h3><p>Configure length, character sets, and optional constraints. Use <strong>Presets</strong> to apply platform-specific settings (PostgreSQL, MySQL, Redis, etc.).</p><h3>Passphrase</h3><p>Generates a sequence of random words. Easier to remember, strong enough for most uses. Adjust word count, capitalization, separator, and optional numbers.</p><h3>PIN</h3><p>A numeric code of 4–12 digits generated with a cryptographically secure random source.</p><h3>Strength</h3><p>Estimated from length and character variety. For best security use 16+ characters with all character sets enabled.</p>',
@@ -57,7 +57,7 @@ const TRANSLATIONS = {
     },
     ru: {
         // ── Оболочка ─────────────────────────────────────────────
-        app_title:       'Passgen',
+        app_title:       'Password Generator',
         subtitle:        'Генератор надёжных паролей',
         help_title:      'Справка',
         help_content:    '<h3>Пароль</h3><p>Настройте длину, наборы символов и ограничения. Используйте <strong>Пресеты</strong> для платформ (PostgreSQL, MySQL, Redis и т.д.).</p><h3>Фраза-пароль</h3><p>Набор случайных слов. Легко запомнить, достаточно надёжный для большинства задач. Настраиваются количество слов, регистр, разделитель и цифры.</p><h3>PIN</h3><p>Числовой код 4–12 цифр на основе криптографически стойкого генератора.</p><h3>Надёжность</h3><p>Оценивается по длине и разнообразию символов. Для максимальной защиты используйте 16+ символов со всеми включёнными наборами.</p>',
