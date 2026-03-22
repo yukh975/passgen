@@ -70,7 +70,7 @@ npx serve .
 
 ## License
 
-MIT © 2026 Yuriy Khachaturian
+[MIT](LICENSE.md) © 2026 Yuriy Khachaturian
 
 ---
 
